@@ -19,12 +19,12 @@ from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
 from omegaconf import OmegaConf as OC
 
-
 # %%
 # Load config
 import os
 os.getcwd()
-PROJECT_DIR = '/zdisk/jaesungyoo/spatial_gene'
+# PROJECT_DIR = '/zdisk/jaesungyoo/spatial_gene'
+PROJECT_DIR = '/home/jaesungyoo/spatial_gene'
 os.chdir(PROJECT_DIR)
 os.listdir()
 
