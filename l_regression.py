@@ -8,27 +8,52 @@ Created on Sun Sep 12 21:20:14 2021
 @author: Junho John Song
 """
 
+import os
+from tqdm import tqdm
 
+import hydra
+import numpy as np
+from omegaconf import OmegaConf as OC
 import pandas as pd
 import scanpy as sc
+from sklearn.preprocessing import MinMaxScaler
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-from tqdm import tqdm
-from torch.utils.data import Dataset, DataLoader
-from omegaconf import OmegaConf as OC
+import torch.optim as optim
+import torch.utils.data as D
+
+import dataset as DAT
+import tools as T
+import tools.modules
+import tools.sklearn
+
+'''
+@John
+
+1. importing
+    (not 100% sure)
+    neat way to import libraries:
+    1. order the libraries into 3 groups.
+    1) python native libraries (ex: os, random, tqdm, multiprocessing, signal, etc)
+    2) official non-native python libraries (ex: pandas, numpy, torch)
+    3) unofficial non-native python libraries (ex: personal libraries, or imports from this project)
+
+    2. Order them alphabetically
+
+2. official import for torch.optim is "import torch.optim as optim"
+
+(3. "import torch.utils.data as D" is unofficial and it's just my style :P )
+'''
 
 # %%
 # Load config
-import os
 os.getcwd()
 # PROJECT_DIR = '/zdisk/jaesungyoo/spatial_gene'
 PROJECT_DIR = '/home/jaesungyoo/spatial_gene'
 os.chdir(PROJECT_DIR)
 os.listdir()
 
-import hydra
 hydra.core.global_hydra.GlobalHydra.instance().clear()
 hydra.initialize_config_dir(config_dir=os.path.join(PROJECT_DIR, 'conf'), job_name='debug')
 overrides = []
@@ -37,68 +62,39 @@ print(OC.to_yaml(cfg))
 
 # %% codecell
 # ## Load data
-adda = sc.read_h5ad(cfg.path.data)
-gene_names = adda.var.index.tolist()
-row_col = adda.obs[['array_row', 'array_col']].values.astype(int)
-df = pd.DataFrame(data=np.concatenate((row_col, adda.X), axis=1), columns=['row', 'col'] + gene_names)
-df['row'] = df['row'].astype(int)
-df['col'] = df['col'].astype(int)
+adata = sc.read_h5ad(cfg.path.data)
 
-df
-adda
-
-def min_max_scale(gm):
-    not_nan_values = gm[~np.isnan(gm)]
-    mx = not_nan_values.max()
-    mn = not_nan_values.min()
-    gm = gm - mn
-    gm = gm / (mx - mn)
-    return gm
-
-def make_gene_map(gene_df, gene_name):
-    gm = min_max_scale(gene_df.pivot('row', 'col', gene_name).values)
-    gm[np.isnan(gm)] = 0
-    return gm
-
-row_len = row_col[:, 0].max() - row_col[:, 0].min() + 1
-col_len = row_col[:, 1].max() - row_col[:, 1].min() + 1
-gene_maps = np.zeros([len(gene_names), row_len, col_len], dtype=np.float32)
-for i, name in enumerate(gene_names):
-    gene_maps[i] = make_gene_map(df, name)
+# Refine data
+gene_maps, scalers = DAT.get_gene_map(adata)
 
 # %% codecell
-df = pd.read_csv(cfg.path.bsc, sep='\t', header=None)
-df.columns = ['gene1', 'gene2', 'a', 'b', 'c', 'd', 'L']
-df = df[df['gene1'].isin(gene_names)]
-df = df[df['gene2'].isin(gene_names)]
-df = df.reset_index(drop=True)
+# Load bsc
+df_bsc = pd.read_csv(cfg.path.bsc, sep='\t', header=None)
+df_bsc.columns = ['gene1', 'gene2', 'a', 'b', 'c', 'd', 'L']
+df_bsc = df_bsc[df_bsc['gene1'].isin(gene_names) & df_bsc['gene2'].isin(gene_names)]
+df_bsc = df_bsc.reset_index(drop=True)
+
 # %% markdown
 # ## Make train data
 # %% codecell
 name2idx = {name:i for i, name in enumerate(gene_names)}
-pairs = np.zeros([len(df), 2], np.int32)
-pairs[:, 0] = df['gene1'].apply(lambda x: name2idx[x])
-pairs[:, 1] = df['gene2'].apply(lambda x: name2idx[x])
+name2idx
+pairs = np.zeros([len(df_bsc), 2], np.int32)
+pairs[:, 0] = df_bsc['gene1'].apply(lambda x: name2idx[x])
+pairs[:, 1] = df_bsc['gene2'].apply(lambda x: name2idx[x])
 y = df['L'].values
+
 # %% codecell
-rarr = np.arange(pairs.shape[0])
-np.random.shuffle(rarr)
-pairs = pairs[rarr]
-y = y[rarr]
+# train/validation/test split
+assert cfg.split.train+cfg.split.val+cfg.split.test==1, f'ratio of train, val, test must sum to 1. received: [train: {cfg.split.train}][val: {cfg.split.val}][test: {cfg.split.test}][sum: {cfg.split.train+cfg.split.val+cfg.split.test}]'
 
-train_num = int(0.8 * pairs.shape[0])
-val_num = int(0.1 * pairs.shape[0])
-test_num = pairs.shape[0] - train_num - val_num
+train_i, val_i, test_i = T.sklearn.model_selection.train_val_test_split_i(y, val_size=cfg.split.val, test_size=cfg.split.test, random_state=cfg.random.seed)
+pairs_train, pairs_val, pairs_test = pairs[train_i], pairs[val_i], pairs[test_i]
+y_train, y_val, y_test = y[train_i], y[val_i], y[test_i]
 
-pairs_train = pairs[:train_num]
-y_train = y[:train_num]
-pairs_val = pairs[train_num:train_num + val_num]
-y_val = y[train_num:train_num + val_num]
-pairs_test = pairs[train_num + val_num:]
-y_test = y[train_num + val_num:]
 # %% codecell
-class LDataset(Dataset):
-
+# Define torch dataset & model
+class LDataset(D.Dataset):
     def __init__(self, gene_maps, pairs, y):
         self.gene_maps = np.expand_dims(gene_maps, 1)
         self.pairs = pairs
@@ -113,105 +109,108 @@ class LDataset(Dataset):
         x2 = self.gene_maps[pair[1]].astype(np.float32)
         y = self.y[idx].astype(np.float32)
         return x1, x2, y
+
 # %% codecell
 class LModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.cnn = nn.Sequential(
+        self.layers = nn.Sequential(
             nn.Conv2d(1, 32, kernel_size=3, stride=2, padding=1),
             nn.ReLU(),
             nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
             nn.ReLU(),
             nn.Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
-            nn.ReLU()
-        )
-        self.lin = nn.Sequential(
-            nn.Linear(4320, 512, bias=True),
+            nn.ReLU(),
+            nn.Flatten(1), # Flattens out except for batch dimension
+            nn.LazyLinear(512, bias=True), # you don't have to specify input nodes for LazyLinear. Great for CNN+FNN :)
             nn.ReLU(),
             nn.Dropout(p=0.5),
             nn.Linear(512, 256, bias=True),
             nn.ReLU(),
             nn.Dropout(p=0.5),
-            nn.Linear(256, 128, bias=True)
+            nn.Linear(256, cfg.model.n_features, bias=True)
         )
 
-    def forward(self, x1, x2):
-        h1 = self.cnn(x1)
-        h1 = h1.view(h1.size(0), -1)
-        h1 = self.lin(h1)
-        h2 = self.cnn(x2)
-        h2 = h2.view(h2.size(0), -1)
-        h2 = self.lin(h2)
-        o = (h1 * h2).mean(1)
-        return o
+    def forward(self, x):
+        return self.layers(x)
 
-    def extract_features(self, x):
-        h = self.cnn(x)
-        h = h.view(h.size(0), -1)
-        h = self.lin(h)
-        return h
 # %% codecell
 def _compute_loss(model, x1, x2, y):
-    out = model(x1, x2)
+    h1 = model(x1)
+    h2 = model(x2)
+    out = (h1 * h2).mean(1)
     loss = F.mse_loss(out, y)
     return loss
 
+'''
+@John
+It's better for a model to forward a single input unless it's necessary.
+What you wanted to do, which was to compute the dot product, is something what the "program" should do, not the model.
+So keep the task of a model to its most simplest form.
+'''
 
-batch_size = 128
-init_lr = 0.0001
+# %%
+'''
+@John since dataset & dataloader doesn't have to change every epoch, make them before the train loop
 
+Q. why did you limit the num_workers=1?
+'''
+dataset_train = LDataset(gene_maps, pairs_train, y_train)
+dataset_val = LDataset(gene_maps, pairs_val, y_val)
+loader_train = D.DataLoader(dataset=dataset_train, batch_size=cfg.train.batch_size, shuffle=True, drop_last=True) # better to shuffle when training. more stable.
+loader_val = D.DataLoader(dataset=dataset_val, batch_size=cfg.train.batch_size, shuffle=False, drop_last=False)
+# loader_train = DataLoader(dataset=dataset, batch_size=cfg.train.batch_size, shuffle=True, num_workers=1, drop_last=True) # better to shuffle when training. more stable.
+# loader_train = DataLoader(dataset=dataset, batch_size=cfg.train.batch_size, shuffle=False, num_workers=1, drop_last=False)
+
+# %%
+loss_tracker_train = T.modules.ValueTracker()
+loss_tracker_val = T.modules.ValueTracker()
+
+# %%
 model = LModel()
-optim = torch.optim.Adam(model.parameters(), lr=init_lr)
+op = optim.Adam(model.parameters(), lr=cfg.train.lr)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-
-for epoch in range(100):
+for epoch in range(cfg.train.epoch):
     print(f'Epoch: {epoch}')
-    for split in ['train', 'val']:
 
-        if split == 'train':
-            dataset = LDataset(gene_maps, pairs_train, y_train)
-        elif split == 'val':
-            dataset = LDataset(gene_maps, pairs_val, y_val)
-        dataloader = DataLoader(dataset=dataset,
-                                batch_size=batch_size,
-                                shuffle=False,
-                                num_workers=1,
-                                drop_last=(split == 'train'))
-        cnt = 0
-        loss_sum = 0
-        for step, batch_data in enumerate(tqdm(dataloader)):
-            x1, x2, y = [x.to(device=device) for x in batch_data]
+    # train
+    model.train()
+    loss_tracker_train.reset()
+    for data in tqdm(loader_train):
+        x1, x2, y = data
+        x1, x2, y = x1.to(device), x2.to(device), y.to(device)
+        N = len(y) # to compute average loss
 
-            if split == 'train':
-                model.train()
-                optim.zero_grad()
-                loss = _compute_loss(model, x1, x2, y)
-                loss.backward()
-                optim.step()
-            else:
-                model.eval()
-                with torch.no_grad():
-                    loss = _compute_loss(model, x1, x2, y)
+        loss = _compute_loss(model, x1, x2, y)
+        op.zero_grad()
+        loss.backward()
+        op.step()
 
-            loss_sum += loss.item()
-            cnt += 1
+        loss_tracker_train.step(loss.item(), N) # item can only be called on single valued tensor. returns the number.
 
-        print(f'{split} loss: {loss_sum / cnt}')
+    print(f'[train][loss: {loss_tracker_val.avg}]')
+
+    # validation
+    model.eval()
+    loss_tracker_val.reset()
+    with torch.no_grad()
+        for data in tqdm(loader_val):
+            x1, x2, y = data
+            x1, x2, y = x1.to(device), x2.to(device), y.to(device)
+            N = len(y)
+
+            loss = _compute_loss(model, x1, x2, y)
+            loss_tracker_val.step(loss.item(), N)
+    print(f'[validation][loss: {loss_tracker_val.avg}]')
+
 # %% codecell
-l_model_features = np.zeros([len(gene_names), 128], dtype=np.float32)
+l_model_features = np.zeros([len(gene_names), cfg.model.n_features], dtype=np.float32)
 model.eval()
 for i in range(len(gene_names)):
     x = torch.tensor(np.expand_dims(gene_maps[i], [0, 1]))
     with torch.no_grad():
         l_model_features[i] = model.extract_features(x)[0].numpy()
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
-# %% codecell
 
 # %% markdown
 # ## Find near ones
@@ -226,7 +225,7 @@ def calc_l(dist_model, img1, img2):
 
 def find_similar_genes(target_feat, all_features, top_k=10):
     dist = np.array([(target_feat * all_features[i]).mean() for i in range(all_features.shape[0])])
-    top_k_idx = np.argsort(dist)[::-1][:top_k]
+    top_k_idx = np.argsort(dist)[-top_k:]
     return top_k_idx, dist[top_k_idx]
 
 def find_far_genes(target_feat, all_features, top_k=10):
@@ -238,21 +237,21 @@ target_gene_name = 'Vxn'
 target_gene_idx = gene_names.index(target_gene_name)
 top10_genes, l_values = find_similar_genes(l_model_features[target_gene_idx], l_model_features)
 
-sc.pl.spatial(adda, color=[target_gene_name] + [gene_names[i] for i in top10_genes])
+sc.pl.spatial(adata, color=[target_gene_name] + [gene_names[i] for i in top10_genes])
 print(l_values)
 # %% codecell
 target_gene_name = 'Ttr'
 target_gene_idx = gene_names.index(target_gene_name)
 top10_genes, l_values = find_similar_genes(l_model_features[target_gene_idx], l_model_features)
 
-sc.pl.spatial(adda, color=[target_gene_name] + [gene_names[i] for i in top10_genes])
+sc.pl.spatial(adata, color=[target_gene_name] + [gene_names[i] for i in top10_genes])
 print(l_values)
 # %% codecell
 target_gene_name = 'Zcchc12'
 target_gene_idx = gene_names.index(target_gene_name)
 top10_genes, l_values = find_similar_genes(l_model_features[target_gene_idx], l_model_features)
 
-sc.pl.spatial(adda, color=[target_gene_name] + [gene_names[i] for i in top10_genes])
+sc.pl.spatial(adata, color=[target_gene_name] + [gene_names[i] for i in top10_genes])
 print(l_values)
 # %% codecell
 
@@ -267,51 +266,13 @@ target_gene_name = 'Vxn'
 target_gene_idx = gene_names.index(target_gene_name)
 top10_genes, l_values = find_far_genes(l_model_features[target_gene_idx], l_model_features)
 
-sc.pl.spatial(adda, color=[target_gene_name] + [gene_names[i] for i in top10_genes])
+sc.pl.spatial(adata, color=[target_gene_name] + [gene_names[i] for i in top10_genes])
 print(l_values)
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
 # %% codecell
 
 # %% codecell
 for i in tqdm(range(100000000)):
     v = (l_model_features[0] * l_model_features[2]).mean()
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
-# %% codecell
-
 # %% codecell
 
 # %% codecell

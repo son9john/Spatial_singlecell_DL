@@ -1,3 +1,7 @@
 train:
-  lr: 1e-3
+  lr: 1e-4
   batch_size: 128
+  epoch: 100
+
+random:
+  seed: 0
