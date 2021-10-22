@@ -1,3 +1,9 @@
+
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+
+# %%
 # Refine data
 '''
 df.index: observation sites
@@ -16,7 +22,7 @@ def get_gene_map(adata):
         gene_maps.append(gene_map), scalers.append(scaler)
 
     return gene_maps, scalers
-    
+
 # %%
 # Make genemap
 def make_gene_map(df, gene_name):

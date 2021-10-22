@@ -49,8 +49,8 @@ import tools.sklearn
 # %%
 # Load config
 os.getcwd()
-# PROJECT_DIR = '/zdisk/jaesungyoo/spatial_gene'
-PROJECT_DIR = '/home/jaesungyoo/spatial_gene'
+PROJECT_DIR = '/zdisk/jaesungyoo/spatial_gene'
+# PROJECT_DIR = '/home/jaesungyoo/spatial_gene'
 os.chdir(PROJECT_DIR)
 os.listdir()
 
@@ -60,12 +60,17 @@ overrides = []
 cfg = hydra.compose(config_name='l_regression', overrides=overrides)
 print(OC.to_yaml(cfg))
 
+# %%
+# device setting
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 # %% codecell
 # ## Load data
 adata = sc.read_h5ad(cfg.path.data)
 
 # Refine data
 gene_maps, scalers = DAT.get_gene_map(adata)
+gene_names = adata.var.index.tolist()
 
 # %% codecell
 # Load bsc
@@ -73,6 +78,7 @@ df_bsc = pd.read_csv(cfg.path.bsc, sep='\t', header=None)
 df_bsc.columns = ['gene1', 'gene2', 'a', 'b', 'c', 'd', 'L']
 df_bsc = df_bsc[df_bsc['gene1'].isin(gene_names) & df_bsc['gene2'].isin(gene_names)]
 df_bsc = df_bsc.reset_index(drop=True)
+
 
 # %% markdown
 # ## Make train data
@@ -82,7 +88,7 @@ name2idx
 pairs = np.zeros([len(df_bsc), 2], np.int32)
 pairs[:, 0] = df_bsc['gene1'].apply(lambda x: name2idx[x])
 pairs[:, 1] = df_bsc['gene2'].apply(lambda x: name2idx[x])
-y = df['L'].values
+y = df_bsc['L'].values
 
 # %% codecell
 # train/validation/test split
@@ -163,21 +169,22 @@ loader_val = D.DataLoader(dataset=dataset_val, batch_size=cfg.train.batch_size, 
 # loader_train = DataLoader(dataset=dataset, batch_size=cfg.train.batch_size, shuffle=False, num_workers=1, drop_last=False)
 
 # %%
-loss_tracker_train = T.modules.ValueTracker()
-loss_tracker_val = T.modules.ValueTracker()
+loss_tracker_train = T.AverageMeter()
+loss_tracker_val = T.AverageMeter()
 
 # %%
 model = LModel()
+model.to(device)
 op = optim.Adam(model.parameters(), lr=cfg.train.lr)
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+# %%
 for epoch in range(cfg.train.epoch):
     print(f'Epoch: {epoch}')
 
     # train
     model.train()
     loss_tracker_train.reset()
-    for data in tqdm(loader_train):
+    for data in loader_train:
         x1, x2, y = data
         x1, x2, y = x1.to(device), x2.to(device), y.to(device)
         N = len(y) # to compute average loss
@@ -194,8 +201,8 @@ for epoch in range(cfg.train.epoch):
     # validation
     model.eval()
     loss_tracker_val.reset()
-    with torch.no_grad()
-        for data in tqdm(loader_val):
+    with torch.no_grad():
+        for data in loader_val:
             x1, x2, y = data
             x1, x2, y = x1.to(device), x2.to(device), y.to(device)
             N = len(y)
@@ -204,13 +211,16 @@ for epoch in range(cfg.train.epoch):
             loss_tracker_val.step(loss.item(), N)
     print(f'[validation][loss: {loss_tracker_val.avg}]')
 
+# %%
+
+
 # %% codecell
 l_model_features = np.zeros([len(gene_names), cfg.model.n_features], dtype=np.float32)
 model.eval()
 for i in range(len(gene_names)):
-    x = torch.tensor(np.expand_dims(gene_maps[i], [0, 1]))
+    x = torch.tensor(np.expand_dims(gene_maps[i], [0, 1])).to(device)
     with torch.no_grad():
-        l_model_features[i] = model.extract_features(x)[0].numpy()
+        l_model_features[i] = model(x)[0].cpu().numpy()
 
 # %% markdown
 # ## Find near ones
@@ -232,6 +242,7 @@ def find_far_genes(target_feat, all_features, top_k=10):
     dist = np.array([(target_feat * all_features[i]).mean() for i in range(all_features.shape[0])])
     top_k_idx = np.argsort(dist)[:top_k]
     return top_k_idx, dist[top_k_idx]
+
 # %% codecell
 target_gene_name = 'Vxn'
 target_gene_idx = gene_names.index(target_gene_name)

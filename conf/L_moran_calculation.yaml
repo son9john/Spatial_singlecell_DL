@@ -1,0 +1,18 @@
+defaults:
+  - /path
+  - /train
+
+model:
+  n_features: 128
+
+path:
+  # data: ${path.project}/data/smaller_dada.h5ad
+  positions: ${path.project}/data/tissue_positions_list.csv
+  barcodes: ${path.project}/data/barcodes.tsv.gz
+  features: ${path.project}/data/features.tsv.gz
+  matrix: ${path.project}/data/matrix.mtx.gz
+
+split:
+  train: 0.8
+  val: 0.1
+  test: 0.1

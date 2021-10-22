@@ -1,4 +1,5 @@
 
 path:
-  project: /home/jaesungyoo/spatial_gene
+  project: /zdisk/jaesungyoo/spatial_gene
+  # project: /home/jaesungyoo/spatial_gene
   data: ${path.project}/data/smaller_dada.h5ad
