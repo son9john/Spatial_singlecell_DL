@@ -1,0 +1,6 @@
+defaults:
+  - /path
+
+path:
+  # data: ${path.project}/data/smaller_dada.h5ad
+  bsc: ${path.project}/data/bsc.txt
