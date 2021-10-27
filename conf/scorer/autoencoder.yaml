@@ -1,0 +1,7 @@
+# @package _global_
+
+scorer:
+  _target_: eval.score_autoencoder
+  cfg:
+    plot: False
+    save_x: False

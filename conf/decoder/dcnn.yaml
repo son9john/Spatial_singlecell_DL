@@ -1,0 +1,5 @@
+# @package _global_
+model:
+  decoder:
+    _target_: model.DCNN
+    channel_list: ${channel_list}
