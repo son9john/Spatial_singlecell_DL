@@ -68,6 +68,20 @@ class CNN(nn.Module):
     def forward(self, x):
         return self.layers(x)
 
+class CNN_BN(nn.Module):
+    def __init__(self, info, channel_list):
+        super().__init__()
+        in_channels = info['in_channels']
+        channel_list = [in_channels]+list(channel_list)
+        layers = []
+        for c_in, c_out in mit.pairwise(channel_list):
+            layers.extend([nn.Conv2d(in_channels=c_in, out_channels=c_out, kernel_size=3, padding=1, stride=2), nn.BatchNorm2d(c_out), nn.ReLU()])
+        self.layers = nn.Sequential(*layers)
+        # self.layers = nn.Sequential(*[nn.Conv2d(in_channels=c_in, out_channels=c_out, kernel_size=3, padding=1, stride=2) for c_in, c_out in mit.pairwise(channel_list)])
+
+    def forward(self, x):
+        return self.layers(x)
+
 class DCNN(nn.Module):
     def __init__(self, info, channel_list):
         super().__init__()
@@ -92,7 +106,23 @@ class UpCNN(nn.Module):
         layers = []
         for c_in, c_out in mit.pairwise(channel_list[:-1]):
             layers.extend([nn.Conv2d(in_channels=c_in, out_channels=c_out, kernel_size=3, padding=1, stride=1), nn.ReLU(), nn.Upsample(scale_factor=2)])
-        layers.extend([nn.Conv2d(in_channels=channel_list[-2], out_channels=channel_list[-1], kernel_size=3, padding=1, stride=1), nn.ReLU(), nn.Upsample(scale_factor=2)])
+        layers.extend([nn.Conv2d(in_channels=channel_list[-2], out_channels=channel_list[-1], kernel_size=3, padding=1, stride=1), nn.Identity(), nn.Upsample(scale_factor=2)])
+        self.layers = nn.Sequential(*layers)
+        # self.layers = nn.Sequential(*[nn.ConvTranspose2d(in_channels=c_in, out_channels=c_out, kernel_size=3, padding=1, output_padding=1, stride=2) for c_in, c_out in mit.pairwise(reversed(channel_list))])
+
+    def forward(self, x):
+        return self.layers(x)
+
+class UpCNN_BN(nn.Module):
+    def __init__(self, info, channel_list):
+        super().__init__()
+        in_channels = info['in_channels']
+        channel_list = list(reversed([in_channels]+list(channel_list)))
+        layers = []
+        for c_in, c_out in mit.pairwise(channel_list[:-1]):
+            layers.extend([nn.Conv2d(in_channels=c_in, out_channels=c_out, kernel_size=3, padding=1, stride=1), nn.BatchNorm2d(c_out), nn.ReLU(), nn.Upsample(scale_factor=2)])
+        # layers.extend([nn.Conv2d(in_channels=channel_list[-2], out_channels=channel_list[-1], kernel_size=3, padding=1, stride=1), nn.BatchNorm2d(channel_list[-1]), nn.Identity(), nn.Upsample(scale_factor=2)])
+        layers.extend([nn.Conv2d(in_channels=channel_list[-2], out_channels=channel_list[-1], kernel_size=3, padding=1, stride=1), nn.Identity(), nn.Upsample(scale_factor=2)])
         self.layers = nn.Sequential(*layers)
         # self.layers = nn.Sequential(*[nn.ConvTranspose2d(in_channels=c_in, out_channels=c_out, kernel_size=3, padding=1, output_padding=1, stride=2) for c_in, c_out in mit.pairwise(reversed(channel_list))])
 

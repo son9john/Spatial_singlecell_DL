@@ -7,5 +7,7 @@ scorer:
     save_x: False
     fig_w: 10
     fig_h: 10
-    target_gene: Ttr
+    target_gene:
+      - Vxn
+      - Ttr
     random_seed: ${random.seed}

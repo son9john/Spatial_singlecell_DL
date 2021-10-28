@@ -99,7 +99,8 @@ def score_autoencoder(cfg, result, data, path):
 
     # 2. Sort & visualize plots, Jaccard & Precision
     log.info('2. Sort & visualize plots, Jaccard & Precision')
-    score = score_jaccard_precision_plot(cfg, result, data, path)
+    score = score_jaccard_precision_plot_AE(cfg, result, data, path)
+    log.info(f'score: {score}')
 
     # Reconstruction loss for test set (BCE)
 
@@ -116,7 +117,6 @@ def score_autoencoder(cfg, result, data, path):
     return score
 
 # %%
-# def dist_cosine(v, m):
 def dist_cosine(m):
     '''
     v: vector
@@ -128,7 +128,6 @@ def dist_cosine(m):
 
     return dist
 
-# def dist_euclidian(v, m):
 def dist_euclidian(m):
     '''
     v: vector
@@ -148,16 +147,8 @@ def dist_euclidian(m):
     # dist = np.linalg.norm((m-v), axis=1, ord=2)
     return dist
 
-
-def score_jaccard_precision_plot(cfg, result, data, path):
-    figsize = (6,4)
-    nrows, ncols = 3, 4
-    top_n = nrows*ncols
-    figsize_all = (figsize[0]*nrows, figsize[1]*ncols)
-
-    adata = data['info']['adata']
-
-    x_all, z_all = result['all']['x'], result['all']['z']
+def score_jaccard_precision_plot_AE(cfg, result, data, path):
+    z_all = result['all']['z']
 
     path.dist = 'distance'
 
@@ -171,28 +162,72 @@ def score_jaccard_precision_plot(cfg, result, data, path):
         path.dist.type.makedirs()
 
         dist = distance_f(z_all) # distance matrix for all pairs
-        score[distance_name] = f(cfg, result, data, path, dist)
+        score[distance_name] = score_jaccard_precision_plot(cfg, data, path.dist.type, dist)
 
     return score
 
-def f(cfg, result, data, path, dist):
-    #
-    gene_names = np.array(data['info']['gene_names'])
-    assert cfg.target_gene in gene_names
+def score_jaccard_precision_plot(cfg, data, path, dist):
+    figsize = (6,4)
+    nrows, ncols = 3, 4
+    top_n = nrows*ncols
+    figsize_all = (figsize[0]*nrows, figsize[1]*ncols)
+    info = {
+    'figsize': figsize,
+    'nrows': nrows,
+    'ncols': ncols,
+    'top_n': top_n,
+    'figsize_all': figsize_all,
+    }
 
-    target_gene_i = np.where(gene_names==cfg.target_gene)[0].item()
-    else_i = np.arange(len(z_all))!=target_gene_i
-    x_target, z_target, x_else, z_else = x_all[target_gene_i], z_all[target_gene_i], x_all[else_i], z_all[else_i]
+    x_all = torch.stack([d for d in data['info']['dataset_all']], axis=0).numpy()
+    score = {}
+
+    if hasattr(cfg.target_gene, '__len__'):
+        for target_gene in cfg.target_gene:
+            score[target_gene] = jaccard_precision_plot_target_gene(cfg, data, path.join(target_gene), dist, target_gene, info)
+    else:
+        score[cfg.target_gene] = jaccard_precision_plot_target_gene(cfg, data, path.join(cfg.target_gene), dist, cfg.target_gene, info)
+
+    # Top 10 area under jaccard/precision curve for all genes
+    with multiprocessing.Pool(processes=4) as pool:
+        result_list = pool.starmap(mean_top_score, zip(range(len(x_all)), it.repeat(x_all), it.repeat(dist), it.repeat(top_n)))
+    mean_aujc_list, mean_aupc_list = [r[0] for r in result_list], [r[1] for r in result_list]
+
+    score['all'] = {}
+    score['all']['aujc'] = np.mean(mean_aujc_list)
+    score['all']['aupc'] = np.mean(mean_aupc_list)
+    return score
+
+def jaccard_precision_plot_target_gene(cfg, data, path, dist, target_gene, info):
+    log.info(f'target_gene: {target_gene}')
+    path.makedirs()
+
+    figsize = info['figsize']
+    nrows, ncols = info['nrows'], info['ncols']
+    top_n = info['top_n']
+    figsize_all = info['figsize_all']
+
+    adata = data['info']['adata']
+    score = {}
+
+    gene_names = np.array(data['info']['gene_names'])
+
+    assert target_gene in gene_names
+
+    x_all = torch.stack([d for d in data['info']['dataset_all']], axis=0).numpy()
+
+    target_gene_i = np.where(gene_names==target_gene)[0].item()
+    else_i = np.arange(len(gene_names))!=target_gene_i
+    x_target, x_else = x_all[target_gene_i], x_all[else_i]
     gene_name_target, gene_names_else = gene_names[target_gene_i], gene_names[else_i]
 
     dist_v = dist[target_gene_i][else_i]
-    # dist = distance_f(z_target, z_else)
     dist_i = np.argsort(dist_v)
 
     # Plot & save
     fig, ax = plt.subplots(figsize=figsize)
     sc.pl.spatial(adata, color=gene_name_target, ax=ax)
-    fig.savefig(path.dist.type.join('gene_target.png'))
+    fig.savefig(path.join('gene_target.png'))
     plt.close(fig)
 
     # closest, farthest
@@ -202,7 +237,7 @@ def f(cfg, result, data, path, dist):
 
     for order, i_order in order_d.items():
 
-        score[distance_name][order] = {}
+        score[order] = {}
 
         gene_names_order, x_else_order = gene_names_else[i_order], x_else[i_order]
 
@@ -210,7 +245,7 @@ def f(cfg, result, data, path, dist):
         fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize_all)
         for gene_name, ax in zip(gene_names_order, axes.flatten()):
             sc.pl.spatial(adata, color=gene_name, ax=ax)
-        fig.savefig(path.dist.type.join(f'gene_else_{order}.png'))
+        fig.savefig(path.join(f'gene_else_{order}.png'))
         plt.close(fig)
 
         # Get Jaccard & Precision score
@@ -224,7 +259,7 @@ def f(cfg, result, data, path, dist):
             ax.plot(thresholds, jaccards, label='jaccard')
             ax.plot(thresholds, precisions, label='precision')
         ax.legend()
-        fig.savefig(path.dist.type.join(f'jp_curve_{order}.png'))
+        fig.savefig(path.join(f'jp_curve_{order}.png'))
         plt.close(fig)
 
         jaccards_else, precisions_else = np.stack(jaccards_list, axis=0), np.stack(precisions_list, axis=0)
@@ -236,7 +271,7 @@ def f(cfg, result, data, path, dist):
         ax.plot(thresholds, jaccards_mean, label='jaccard')
         ax.plot(thresholds, precisions_mean, label='precision')
         ax.legend()
-        fig.savefig(path.dist.type.join(f'jp_curve_all_{order}.png'))
+        fig.savefig(path.join(f'jp_curve_all_{order}.png'))
         plt.close(fig)
 
         # metrics
@@ -246,39 +281,8 @@ def f(cfg, result, data, path, dist):
         aujc, aupc = aujc_else.mean(), aupc_else.mean()
 
         # Average score on top N genes
-        score[distance_name][order]['aujc'] = aujc
-        score[distance_name][order]['aupc'] = aupc
-
-    # Top 10 area under jaccard/precision curve for all genes
-    with multiprocessing.Pool(processes=4) as pool:
-        result_list = pool.starmap(mean_top_score, zip(range(len(x_all)), it.repeat(x_all), it.repeat(dist), it.repeat(top_n)))
-    mean_aujc_list, mean_aupc_list = [r[0] for r in result_list], [r[1] for r in result_list]
-
-    # for target_gene_i in tqdm.tqdm(range(len(z_all))):
-    #     else_i = np.arange(len(z_all))!=target_gene_i
-    #     x_target, x_else = x_all[target_gene_i], x_all[else_i]
-    #
-    #     dist_v = dist[target_gene_i][else_i]
-    #     dist_i = np.argsort(dist_v)
-    #     i_close = dist_i[:top_n]
-    #     x_else_close = x_else[i_close].squeeze(1)
-    #     with multiprocessing.Pool(processes=4) as pool:
-    #         result_l = pool.starmap(jaccard_precision_curve, zip(it.repeat(x_target), x_else_close, it.repeat(500)))
-    #     jaccards_list, precisions_list = [result[1] for result in result_l], [result[0] for result in result_l]
-    #
-    #     # for x_else_close_sample in x_else_close:
-    #     #     thresholds, jaccards, precisions = jaccard_precision_curve(x_target, x_else_close_sample, n_threshold=500)
-    #     #     jaccards_list.append(jaccards), precisions_list.append(precisions)
-    #     jaccards_else, precisions_else = np.stack(jaccards_list, axis=0), np.stack(precisions_list, axis=0)
-    #
-    #     aujc = np.array([metrics.auc(thresholds, jaccard) for jaccard in jaccards_else]).mean()
-    #     aupc = np.array([metrics.auc(thresholds, precision) for precision in precisions_else]).mean()
-    #
-    #     mean_aujc_list.append(aujc), mean_aupc_list.append(aupc)
-
-    score[distance_name]['all'] = {}
-    score[distance_name]['all']['aujc'] = np.mean(mean_aujc_list)
-    score[distance_name]['all']['aupc'] = np.mean(mean_aupc_list)
+        score[order]['aujc'] = aujc
+        score[order]['aupc'] = aupc
     return score
 
 def mean_top_score(target_gene_i, x_all, dist, top_n):

@@ -1,0 +1,5 @@
+# @package _global_
+model:
+  decoder:
+    _target_: model.UpCNN_BN
+    channel_list: ${channel_list}

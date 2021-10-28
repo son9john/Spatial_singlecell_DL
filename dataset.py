@@ -1,18 +1,17 @@
 import os
 import logging
+import pprint
 
+import numpy as np
+import pandas as pd
 import scanpy as sc
-
+from sklearn.preprocessing import MinMaxScaler
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data as D
 import torchvision.transforms as transforms
-
-import numpy as np
-import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
 
 import tools as T
 import tools.sklearn
@@ -92,8 +91,17 @@ def get_autoencoder_data(cfg):
     sample = dataset_train[0]
     in_channels = sample.shape[0]
     input_shape = sample.shape
-    
+
     dataset_all = GeneImageDataset(data=gene_maps, cfg=cfg.cfg_dataset)
+
+    info = {
+        'in_channels': in_channels,
+        'input_shape': input_shape,
+        'gene_names': gene_names,
+        'df_gene': df_gene,
+        'dataset_all': dataset_all,
+        'adata': adata,
+    }
 
     data = {
         'dataset': {
@@ -104,16 +112,11 @@ def get_autoencoder_data(cfg):
             'train': train_i,
             'test': test_i,
         },
-        'info': {
-            'in_channels': in_channels,
-            'input_shape': input_shape,
-            'gene_names': gene_names,
-            'df_gene': df_gene,
-            'dataset_all': dataset_all,
-            'adata': adata,
-        }
-
+        'info': info,
     }
+
+    pp = pprint.PrettyPrinter()
+    log.info('data.info:\n'+pp.pformat(info))
 
     return data
 

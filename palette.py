@@ -156,3 +156,27 @@ x_all, x_hat_all, z_all = x_all.cpu().numpy(), x_hat_all.cpu().numpy(), z_all.cp
                     ax.imshow(x_img)
                     fig.savefig(path_x_c.join(f'{gene_name}.png'))
                     plt.close(fig)
+
+
+# %%
+    # for target_gene_i in tqdm.tqdm(range(len(z_all))):
+    #     else_i = np.arange(len(z_all))!=target_gene_i
+    #     x_target, x_else = x_all[target_gene_i], x_all[else_i]
+    #
+    #     dist_v = dist[target_gene_i][else_i]
+    #     dist_i = np.argsort(dist_v)
+    #     i_close = dist_i[:top_n]
+    #     x_else_close = x_else[i_close].squeeze(1)
+    #     with multiprocessing.Pool(processes=4) as pool:
+    #         result_l = pool.starmap(jaccard_precision_curve, zip(it.repeat(x_target), x_else_close, it.repeat(500)))
+    #     jaccards_list, precisions_list = [result[1] for result in result_l], [result[0] for result in result_l]
+    #
+    #     # for x_else_close_sample in x_else_close:
+    #     #     thresholds, jaccards, precisions = jaccard_precision_curve(x_target, x_else_close_sample, n_threshold=500)
+    #     #     jaccards_list.append(jaccards), precisions_list.append(precisions)
+    #     jaccards_else, precisions_else = np.stack(jaccards_list, axis=0), np.stack(precisions_list, axis=0)
+    #
+    #     aujc = np.array([metrics.auc(thresholds, jaccard) for jaccard in jaccards_else]).mean()
+    #     aupc = np.array([metrics.auc(thresholds, precision) for precision in precisions_else]).mean()
+    #
+    #     mean_aujc_list.append(aujc), mean_aupc_list.append(aupc)

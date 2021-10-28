@@ -1,0 +1,5 @@
+# @package _global_
+model:
+  encoder:
+    _target_: model.CNN_BN
+    channel_list: ${channel_list}
