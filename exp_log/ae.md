@@ -35,6 +35,7 @@ train.lr=1e-4 train.batch_size=128 train.epoch=200 channel_list=\[8,16,32\],\[32
 encoder=cnn,cnn_blocks decoder=dcnn,dcnn_blocks,upcnn \
 hydra/launcher=joblib hydra.launcher.n_jobs=12 & -->
 
+#### HP search
 @nipa_kks @@
 nohup python jh_ae.py -m hydra.sweep.dir=exp/HP_search2 \
 train.lr=1e-4 train.batch_size=128 train.epoch=200 channel_list=v1,v2,v3,v4,v5,v6,v7,v8,v9 \
@@ -53,8 +54,22 @@ train.lr=1e-4 train.batch_size=128 train.epoch=200 channel_list=v1,v2,v3,v4,v5,v
 encoder=cnn,cnn_blocks decoder=dcnn,dcnn_blocks,upcnn \
 random.seed="range(0,3)" hydra/launcher=joblib hydra.launcher.n_jobs=24 &
 
-@nipa_kks @
+@nipa_kks @@
 nohup python jh_ae.py -m hydra.sweep.dir=exp/HP_search3 \
 train.lr=1e-4 train.batch_size=128 train.epoch=200 channel_list=c256_3,c256_4,c256_5,c256_6,c512_3,c512_4,c512_5,c512_6 \
 encoder=cnn,cnn_blocks decoder=dcnn,dcnn_blocks,upcnn \
 random.seed="range(0,3)" hydra/launcher=joblib hydra.launcher.n_jobs=12 &
+
+#### Final result
+@nipa_kks @
+python jh_ae.py hydra.run.dir=exp/Final1 \
+train.lr=1e-4 train.batch_size=128 train.epoch=200 channel_list=c256_3 \
+encoder=cnn decoder=upcnn \
+scorer.cfg.plot=True scorer.cfg.save_x=True
+random.seed=0
+
+python jh_ae.py hydra.run.dir=exp/Final1 \
+train.lr=1e-4 train.batch_size=128 train.epoch=1 channel_list=c256_3 \
+encoder=cnn decoder=upcnn \
+scorer.cfg.plot=True scorer.cfg.save_x=True
+random.seed=0

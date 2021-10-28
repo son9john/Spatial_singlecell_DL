@@ -8,3 +8,4 @@ scorer:
     fig_w: 10
     fig_h: 10
     target_gene: Ttr
+    random_seed: ${random.seed}

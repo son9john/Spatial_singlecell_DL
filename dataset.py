@@ -1,4 +1,5 @@
 import os
+import logging
 
 import scanpy as sc
 
@@ -15,6 +16,9 @@ from sklearn.preprocessing import MinMaxScaler
 
 import tools as T
 import tools.sklearn
+
+# %%
+log = logging.getLogger(__name__)
 
 # %%
 if False:
@@ -88,6 +92,7 @@ def get_autoencoder_data(cfg):
     sample = dataset_train[0]
     in_channels = sample.shape[0]
     input_shape = sample.shape
+    
     dataset_all = GeneImageDataset(data=gene_maps, cfg=cfg.cfg_dataset)
 
     data = {
