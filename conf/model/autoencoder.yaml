@@ -1,0 +1,19 @@
+# @package _global_
+defaults:
+  - /encoder: cnn
+  - /decoder: dcnn
+  - /channel_list: v1
+
+model:
+  _target_: model.AutoEncoder
+  _recursive_: False
+
+# channel_list:
+#   - 8
+#   - 16
+#   - 32
+  # - 64
+  # - 128
+  # - 256
+  # - 512
+  # - 512

@@ -1,0 +1,6 @@
+# @package _global_
+channel_list:
+  - 32
+  - 64
+  - 128
+  - 256

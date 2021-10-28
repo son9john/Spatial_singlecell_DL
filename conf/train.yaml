@@ -1,7 +1,10 @@
 train:
-  lr: 1e-4
-  batch_size: 128
+  lr: 1e-3
+  batch_size: 64
   epoch: 100
 
 random:
   seed: 0
+  strict: True
+
+gpu_id: null

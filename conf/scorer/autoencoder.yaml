@@ -1,0 +1,10 @@
+# @package _global_
+
+scorer:
+  _target_: eval.score_autoencoder
+  cfg:
+    plot: False
+    save_x: False
+    fig_w: 10
+    fig_h: 10
+    target_gene: Ttr
