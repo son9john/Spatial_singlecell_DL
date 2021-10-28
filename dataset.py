@@ -78,7 +78,7 @@ def get_autoencoder_data(cfg):
 
 
     # train-test split
-    train_i, test_i = T.sklearn.model_selection.train_test_split_i(gene_maps, test_size=cfg.test_size)
+    train_i, test_i = T.sklearn.model_selection.train_test_split_i(gene_maps, test_size=cfg.test_size, random_state=cfg.seed)
     gene_maps_train, gene_maps_test = gene_maps[train_i], gene_maps[test_i]
 
     # Wrap in dataset

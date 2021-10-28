@@ -1,0 +1,6 @@
+# @package _global_
+channel_list:
+  - 8
+  - 16
+  - 32
+  - 64

@@ -41,12 +41,13 @@ class ConvBlock(nn.Module):
 
 class DeConvBlock(nn.Module):
     '''Increase spatial resolution by 2'''
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, activation):
         super().__init__()
         self.layers = nn.Sequential(
         nn.ConvTranspose2d(in_channels=in_channels, out_channels=out_channels, kernel_size=3, padding=1, stride=1),
         nn.Upsample(scale_factor=2),
-        nn.ReLU(),
+        # nn.ReLU(),
+        activation,
         )
 
     def forward(self, x):
@@ -87,10 +88,11 @@ class UpCNN(nn.Module):
     def __init__(self, info, channel_list):
         super().__init__()
         in_channels = info['in_channels']
-        channel_list = [in_channels]+list(channel_list)
+        channel_list = list(reversed([in_channels]+list(channel_list)))
         layers = []
-        for c_in, c_out in mit.pairwise(reversed(channel_list)):
-            layers.extend([nn.Conv2d(in_channels=c_in, out_channels=c_out, kernel_size=3, padding=1, output_padding=1, stride=2), nn.ReLU(), nn.Upsample(2)])
+        for c_in, c_out in mit.pairwise(channel_list[:-1]):
+            layers.extend([nn.Conv2d(in_channels=c_in, out_channels=c_out, kernel_size=3, padding=1, stride=1), nn.ReLU(), nn.Upsample(scale_factor=2)])
+        layers.extend([nn.Conv2d(in_channels=channel_list[-2], out_channels=channel_list[-1], kernel_size=3, padding=1, stride=1), nn.ReLU(), nn.Upsample(scale_factor=2)])
         self.layers = nn.Sequential(*layers)
         # self.layers = nn.Sequential(*[nn.ConvTranspose2d(in_channels=c_in, out_channels=c_out, kernel_size=3, padding=1, output_padding=1, stride=2) for c_in, c_out in mit.pairwise(reversed(channel_list))])
 
@@ -111,8 +113,11 @@ class DCNN_Blocks(nn.Module):
     def __init__(self, info, channel_list):
         super().__init__()
         in_channels = info['in_channels']
-        channel_list = [in_channels]+list(channel_list)
-        self.layers = nn.Sequential(*[DeConvBlock(c_in, c_out) for c_in, c_out in mit.pairwise(reversed(channel_list))])
+        channel_list = list(reversed([in_channels]+list(channel_list)))
+        layers = [DeConvBlock(c_in, c_out, nn.ReLU()) for c_in, c_out in mit.pairwise(channel_list[:-1])]
+        layers.append(DeConvBlock(channel_list[-2], channel_list[-1], nn.Identity()))
+        self.layers = nn.Sequential(*layers)
+        # self.layers = nn.Sequential(*[DeConvBlock(c_in, c_out) for c_in, c_out in mit.pairwise(reversed(channel_list))])
 
     def forward(self, x):
         return self.layers(x)

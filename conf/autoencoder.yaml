@@ -2,6 +2,7 @@ defaults:
   - /path
   - /train
   - model: autoencoder
+  - scorer: autoencoder
   - criterion: bce_loss
 
 data:
@@ -10,17 +11,13 @@ data:
     cfg:
       path: ${path.data}
       test_size: ${split.test}
+      seed: 0
       cfg_dataset:
         width: 128
         height: 64
 
 eval:
   _target_: eval.eval_autoencoder
-
-score:
-  plot: False
-  save_x: False
-
 
 path:
   # data: ${path.project}/data/smaller_dada.h5ad

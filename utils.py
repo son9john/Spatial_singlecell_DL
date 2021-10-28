@@ -1,6 +1,9 @@
 import os
 import logging
 
+import multiprocessing
+import torch
+
 import tools as T
 import tools.torch
 import tools.random
@@ -37,6 +40,9 @@ def exp_setting(cfg, path=None):
 
     # Set GPU for current experiment
     device = T.torch.multiprocessing_device(cfg.gpu_id)
+    # device = multiprocessing_device(cfg.gpu_id)
+    log.info(device)
+
     T.random.seed(cfg.random.seed, strict=cfg.random.strict)
     path = exp_path(path)
     return device, path

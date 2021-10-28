@@ -2,20 +2,18 @@
 defaults:
   - /encoder: cnn
   - /decoder: dcnn
+  - /channel_list: v1
 
 model:
   _target_: model.AutoEncoder
   _recursive_: False
-  # encoder:
-  #   _target_: model.CNN
-  #   channel_list: ${channel_list}
-  # decoder:
-  #   _target_: model.DCNN
-  #   channel_list: ${channel_list}
 
-channel_list:
-  - 64
-  - 128
-  - 256
-  - 512
-  - 512
+# channel_list:
+#   - 8
+#   - 16
+#   - 32
+  # - 64
+  # - 128
+  # - 256
+  # - 512
+  # - 512
