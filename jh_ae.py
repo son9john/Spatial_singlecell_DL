@@ -25,12 +25,14 @@ import torch.optim as optim
 import torch.utils.data as D
 import torchvision.transforms as transforms
 
-PROJECT_DIR = '/home/jaesungyoo/spatial_gene'
-os.chdir(PROJECT_DIR)
+# PROJECT_DIR = '/home/jaesungyoo/spatial_gene'
+# PROJECT_DIR = '/zdisk/jaesungyoo/spatial_gene'
+# os.chdir(PROJECT_DIR)
 
 import node as N
 import utils as U
 import eval as E
+import tools as T
 
 # %%
 log = logging.getLogger(__name__)
@@ -40,8 +42,8 @@ if False:
     # %%
     # Load config
     os.getcwd()
-    # PROJECT_DIR = '/zdisk/jaesungyoo/spatial_gene'
-    PROJECT_DIR = '/home/jaesungyoo/spatial_gene'
+    PROJECT_DIR = '/zdisk/jaesungyoo/spatial_gene'
+    # PROJECT_DIR = '/home/jaesungyoo/spatial_gene'
     os.chdir(PROJECT_DIR)
     os.listdir()
 
@@ -58,8 +60,9 @@ if False:
     hydra.initialize_config_dir(config_dir=os.path.join(PROJECT_DIR, 'conf'), job_name='debug')
     overrides = []
     overrides = ['save_x=True']
-    overrides = ['criterion=bce_loss']
     overrides = ['criterion=bce_loss', 'train.epoch=0']
+    # overrides = ['criterion=bce_loss', 'train.epoch=100']
+    # overrides = ['criterion=bce_loss', 'train.epoch=200', 'encoder=cnn_bn', 'decoder=upcnn_bn', 'channel_list=c256_6', 'scorer.cfg.plot=True', 'scorer.cfg.save_x=True']
     cfg = hydra.compose(config_name='autoencoder', overrides=overrides)
     print(OC.to_yaml(cfg))
 
@@ -91,15 +94,27 @@ def main(cfg: DictConfig) -> None:
     # %%
     node.model.to(device)
     node.step(no_val=True)
-    # node.save(path.Node)
 
     # %%
     # Evaluate
+    # %%
+    if cfg.augmented:
+        node.model.to(device)
+        result_d = hydra.utils.instantiate(cfg.eval_augment, model, data)
+        node.model.cpu()
+        score = hydra.utils.instantiate(cfg.scorer_augment, result_d=result_d, data=data, path=path.RESULT.join('augmented'))
+        log.info(f'score: {score}')
+        T.save_pickle(score, path.RESULT.join('result_augment.p'))
+
+    # %%
     node.model.to(device)
     result = hydra.utils.instantiate(cfg.eval, model, data)
     node.model.cpu()
     score = hydra.utils.instantiate(cfg.scorer, result=result, data=data, path=path.RESULT)
+    log.info(f'score: {score}')
     E.save_score(score, path.RESULT)
+
+    # %%
 
     # %%
 

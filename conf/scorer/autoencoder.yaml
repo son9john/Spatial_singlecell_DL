@@ -1,13 +1,25 @@
 # @package _global_
 
+augmented: True
+
 scorer:
   _target_: eval.score_autoencoder
   cfg:
     plot: False
     save_x: False
+    augment: False
     fig_w: 10
     fig_h: 10
     target_gene:
       - Vxn
       - Ttr
     random_seed: ${random.seed}
+
+scorer_augment:
+  _target_: eval.score_autoencoder_augmented
+  cfg:
+    augment: True
+    target_gene:
+      - 0A
+      - 50A
+      - 80A

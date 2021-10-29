@@ -25,8 +25,8 @@ from skimage.metrics import structural_similarity as ssim
 import torch
 
 import os
-PROJECT_DIR = '/home/jaesungyoo/spatial_gene'
-os.chdir(PROJECT_DIR)
+# PROJECT_DIR = '/home/jaesungyoo/spatial_gene'
+# os.chdir(PROJECT_DIR)
 
 import tools as T
 import eval as E
@@ -69,24 +69,8 @@ if False:
     cfg = hydra.compose(config_name='autoencoder', overrides=overrides)
     print(OC.to_yaml(cfg))
 
-# %%
-@hydra.main(config_path='conf', config_name='autoencoder')
-def main(cfg: DictConfig) -> None:
-    # %%
-    print(OmegaConf.to_yaml(cfg))
-
-    # path: current directory
-    path = T.Path()
-    path.RESULT = 'result'
-    path.makedirs()
-
-    # Load data
-    data = hydra.utils.instantiate(cfg.data.dataset)
-    x_all = torch.stack([d for d in data['info']['dataset_all']], axis=0).squeeze(1).numpy()
-
-    # Test ssim
+def get_ssim(x_all):
     n_genes = len(x_all)
-    x_all.shape
     dist = np.zeros((n_genes,n_genes))
 
     # %%
@@ -103,6 +87,48 @@ def main(cfg: DictConfig) -> None:
     dist[np.tril_indices(n_genes)] = dist.T[np.tril_indices(n_genes)]
     # dist[np.diag_indices(n_genes)] = dist_diag
     dist[np.diag_indices(n_genes)] = 1
+    return dist
+
+# %%
+@hydra.main(config_path='conf', config_name='autoencoder')
+def main(cfg: DictConfig) -> None:
+    # %%
+    print(OmegaConf.to_yaml(cfg))
+
+    # path: current directory
+    path = T.Path()
+    path.RESULT = 'result'
+    path.makedirs()
+
+    # Load data
+    data = hydra.utils.instantiate(cfg.data.dataset)
+    x_all = torch.stack([d for d in data['info']['dataset_all']], axis=0).squeeze(1).numpy()
+
+    if cfg.augmented:
+        dataset_d = data['info']['dataset_augmented_d']
+        gene_names_augmented_d = data['info']['gene_names_augmented_d']
+
+        for dataset_type in dataset_d.keys():
+            log.info(f'dataset_type: {dataset_type}')
+            dataset, gene_names = dataset_d[dataset_type], gene_names_augmented_d[dataset_type]
+            x_augmented = torch.stack([d for d in dataset], axis=0).squeeze(1).numpy()
+
+            path.RESULT.AUGMENT = dataset_type
+            path.RESULT.AUGMENT.makedirs()
+            data_type = {
+            'info': {'gene_names': gene_names}
+            }
+
+            # dist = get_ssim(x_augmented.squeeze(1))
+            dist = get_ssim(x_augmented)
+            dist = -dist
+
+            scores = E.score_jaccard_precision_plot(cfg=cfg.scorer_augment.cfg, x_all=x_augmented, data=data_type, path=path.RESULT.AUGMENT, dist=dist)
+            log.info(f'score: {scores}')
+            T.save_pickle(scores, path.RESULT.AUGMENT.join('result_augment.p'))
+
+    # Test ssim
+    dist = get_ssim(x_all)
 
     '''
     For Junho
@@ -122,7 +148,7 @@ def main(cfg: DictConfig) -> None:
 
     # %%
     # Evaluate
-    scores = E.score_jaccard_precision_plot(cfg=cfg.scorer.cfg, data=data, path=path.RESULT, dist=dist)
+    scores = E.score_jaccard_precision_plot(cfg=cfg.scorer.cfg, x_all=x_all, data=data, path=path.RESULT, dist=dist)
 
     cfg.scorer.cfg.target_gene
     pp = pprint.PrettyPrinter()

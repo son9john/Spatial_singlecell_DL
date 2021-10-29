@@ -10,18 +10,27 @@ data:
     _target_: dataset.get_autoencoder_data
     cfg:
       path: ${path.data}
+      augmented: ${path.augmented}
       test_size: ${split.test}
       seed: 0
+      n_clusters: 5
       cfg_dataset:
         width: 128
         height: 64
 
 eval:
   _target_: eval.eval_autoencoder
+eval_augment:
+  _target_: eval.eval_autoencoder_augment
 
 path:
   # data: ${path.project}/data/smaller_dada.h5ad
   bsc: ${path.project}/data/bsc.txt
+  augmented:
+    # contour: ${path.project}/data/augmented/contour_set.pickle
+    contour: ${path.project}/data/augmented/contourv2_set.pickle
+    transformation: ${path.project}/data/augmented/tf_invariant_set.pickle
+    translation: ${path.project}/data/augmented/tl_invariant_set.pickle
 
 split:
   train: 0.8

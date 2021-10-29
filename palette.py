@@ -180,3 +180,74 @@ x_all, x_hat_all, z_all = x_all.cpu().numpy(), x_hat_all.cpu().numpy(), z_all.cp
     #     aupc = np.array([metrics.auc(thresholds, precision) for precision in precisions_else]).mean()
     #
     #     mean_aujc_list.append(aujc), mean_aupc_list.append(aupc)
+# %%
+'''
+Plot samples
+'''
+import torch
+import numpy as np
+import hydra
+from omegaconf import OmegaConf as OC
+
+PROJECT_DIR = '/home/jaesungyoo/spatial_gene'
+os.chdir(PROJECT_DIR)
+
+hydra.core.global_hydra.GlobalHydra.instance().clear()
+hydra.initialize_config_dir(config_dir=os.path.join(PROJECT_DIR, 'conf'), job_name='debug')
+overrides = []
+cfg = hydra.compose(config_name='autoencoder', overrides=overrides)
+print(OC.to_yaml(cfg))
+
+cfg = cfg.data.dataset.cfg
+
+data = hydra.utils.instantiate(cfg.data.dataset)
+x_all = torch.stack([d for d in data['info']['dataset_all']], axis=0).squeeze(1).numpy()
+
+adata = sc.read_h5ad(cfg.path)
+
+# Refine data
+data = get_gene_map(adata)
+gene_names, df_gene, gene_maps, scalers = data['gene_names'], data['df_gene'], data['gene_maps'], data['scalers']
+
+import matplotlib.pyplot as plt
+path = T.Path('samples')
+path.makedirs()
+for x, gene in zip(x_all, gene_names):
+    fig, ax = plt.subplots()
+    ax.imshow(x, cmap='gray')
+    fig.savefig(path.join(f'{gene}.png'))
+    plt.close(fig)
+
+# %%
+import seaborn as sns
+from sklearn.decomposition import PCA
+from sklearn.mixture import GaussianMixture, BayesianGaussianMixture
+
+reducer=PCA()
+z_reduced = reducer.fit_transform(z_np)
+
+gmm = BayesianGaussianMixture(n_components=5, random_state=cfg.scorer.cfg.random_seed)
+gmm = GaussianMixture(n_components=4, random_state=cfg.scorer.cfg.random_seed)
+gmm = GaussianMixture(n_components=3, random_state=cfg.scorer.cfg.random_seed)
+c_gmm = gmm.fit_predict(z_reduced)
+
+z_df = pd.DataFrame({'z1': z_reduced[:,0], 'z2': z_reduced[:,1]})
+z_df['cluster'] = c_gmm
+z_df = z_df.astype({'cluster':'category'})
+
+fig, ax = plt.subplots()
+sns.scatterplot(data=z_df, x='z1', y='z2', hue='cluster', ax=ax)
+fig
+
+fig.savefig(path.RESULT.join('distribution.png'))
+# %%
+for c in np.unique(c_gmm):
+    x_hat_c = x_hat[c_gmm==c]
+    for i in range(5):
+        fig, ax = T.torch.plot.imshow(x_hat_c[i])
+        ax.set_title(str(c))
+
+
+z_np=result['all']['z']
+result['all']['z'] = z_reduced
+E.plot_clusters(result, data, path.RESULT, gmm)
