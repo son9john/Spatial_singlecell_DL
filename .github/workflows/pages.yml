@@ -1,0 +1,110 @@
+# Builds the juxtaposed site and publishes it with GitHub Pages:
+#   /            landing page           (J/site/index.html)
+#   /r/          Shiny app for R        (Shinylive + webR, runs in the browser)
+#   /python/     Shiny app for Python   (Shinylive + Pyodide, runs in the browser)
+#   /vignette/   Seurat vignette (rendered R Markdown) and Scanpy notebook (executed Jupyter)
+# One-time setup on GitHub: Settings -> Pages -> Source: GitHub Actions.
+name: Pages
+
+on:
+  push:
+    branches: [juxtaposition-index]
+    paths: ["J/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Landing page
+        run: |
+          mkdir -p _site
+          cp J/site/index.html _site/index.html
+          touch _site/.nojekyll
+
+      # ---- Python app -------------------------------------------------------------
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Export the Python app
+        run: |
+          python -m pip install --upgrade shinylive
+          cp -R J/python/src/juxtaposed J/site/apps/python/juxtaposed
+          shinylive export J/site/apps/python _site/python
+
+      # The notebook downloads two 10x Visium sections from 10x Genomics. If it fails, the rest is still published.
+      - name: Execute the Scanpy notebook
+        continue-on-error: true
+        run: |
+          python -m pip install "scanpy>=1.10,<1.12" leidenalg igraph matplotlib nbconvert ipykernel ./J/python
+          mkdir -p _site/vignette
+          cp J/site/vignettes/scanpy_juxtaposition.ipynb _site/vignette/
+          jupyter nbconvert --to html --execute J/site/vignettes/scanpy_juxtaposition.ipynb \
+            --ExecutePreprocessor.timeout=3600 --output-dir _site/vignette
+
+      # ---- R ----------------------------------------------------------------------
+      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::shinylive
+            any::shiny
+            any::bslib
+            any::DT
+            any::ggplot2
+            any::Matrix
+            any::rmarkdown
+            any::knitr
+            any::Seurat
+            any::patchwork
+            any::dplyr
+            any::RANN
+            bioc::glmGamPoi
+            github::satijalab/seurat-data
+            local::./J/r/juxtaposed
+
+      - name: Export the R app
+        run: |
+          mkdir -p J/site/apps/r/juxtaposed
+          cp J/r/juxtaposed/R/*.R J/site/apps/r/juxtaposed/
+          Rscript -e 'shinylive::export("J/site/apps/r", "_site/r")'
+
+      # The vignette downloads the stxBrain data (several hundred MB) and takes 10-20 minutes.
+      # If it fails, the apps are still published; the log of this step says why.
+      - name: Render the Seurat vignette
+        continue-on-error: true
+        run: |
+          Rscript -e 'SeuratData::InstallData("stxBrain")'
+          Rscript -e 'rmarkdown::render("J/site/vignettes/seurat_juxtaposition.Rmd", output_dir = "_site/vignette")'
+          cp J/site/vignettes/seurat_juxtaposition.Rmd _site/vignette/
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

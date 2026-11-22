@@ -4,9 +4,10 @@ Title: The Juxtaposition Index J for Spatial Omics
 Version: 0.4.0
 Authors@R: c(
     person("Junho", "Song", role = c("aut", "cre"),
-           email = "maintainer.email@to-be-confirmed.org"),
-    person("Dongjoo", "Lee", role = "aut"),
+           email = "son9john.uchicago@gmail.com"),
+    person("Jihyun", "Kim", role = "aut"),
     person("Jaesung", "Yoo", role = "aut"),
+    person("Dongjoo", "Lee", role = "aut"),
     person("Kwangsoo", "Kim", role = "aut"))
 Description: Computes the juxtaposition index J, a bounded gradient-domain
     bivariate statistic that measures whether two features change in opposite

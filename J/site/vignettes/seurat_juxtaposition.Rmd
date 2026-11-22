@@ -1,0 +1,363 @@
+---
+title: "Juxtaposition analysis of spatial transcriptomics with Seurat"
+subtitle: "A complete workflow with the juxtaposed R package: interfaces with boundary J, co-localization with regional J"
+author: "Junho Song, Jihyun Kim, Jaesung Yoo, Dongjoo Lee, Kwangsoo Kim"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: true
+    code_folding: show
+    df_print: paged
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.width = 9, fig.height = 5, dpi = 110,
+                      cache = FALSE)
+```
+
+# Overview
+
+This vignette runs a standard Seurat spatial workflow and then adds juxtaposition analysis on top of it. It is written for bioinformaticians who will adapt it to their own sections, so each step says what it computes, which question it answers, and what to check before trusting the result.
+
+The juxtaposed package provides two scores, and they answer **different questions**:
+
+| Question | Score | Function | Reads |
+|---|---|---|---|
+| Do two programs meet at a tissue interface and change in *opposite* directions across it? | **Boundary J** | `juxtaposition()` | J > 0 opposing changes (an interface); J < 0 concordant changes; J ≈ 0 no shared boundary |
+| *Where* is that interface? | **Edge map** | `score_edges()` → `edges_to_nodes()` | High signed evidence marks the edges where the pair changes in opposite directions |
+| Are two genes expressed in the *same* neighbourhoods (co-expression, co-localization)? | **Regional J** | `regional_juxtaposition_matrix()` | > 0 shared region; < 0 complementary regions |
+
+Boundary J is not a co-expression statistic. Two genes that are expressed in the same region rise and fall together across that region's edge, so boundary J is *negative* for them; that is correct, but it is the wrong instrument for the question "are these co-localized?". Use regional J for that question.
+
+**Why boundary J and not Lee's L or bivariate Moran's I for interfaces?** Those statistics compare smoothed *levels*, so two complementary domains that touch and two that sit far apart can have nearly the same value. Boundary J compares *changes across the same edges*: it is positive only when the two domains actually meet. Its p-values come from an exact spectral sign-flip null on the tissue graph, so they are calibrated without permutations.
+
+## Workflow at a glance
+
+1. Start from a processed Seurat object (normalized data, clusters).
+2. Build a spatial neighbour graph from the spot coordinates.
+3. Score boundary J for all pairs of a gene panel, with spectral p- and q-values.
+4. Map the interface of the top pairs with edge-level J.
+5. Ask which clusters the interface separates.
+6. Score co-localization with regional J and find co-localized modules.
+7. Check calibration, robustness to the smoothing scale, and agreement across sections.
+8. Export results and report them.
+
+# Setup
+
+## Installation
+
+Run once. Seurat v5, SeuratData and the juxtaposed package from this repository:
+
+```{r install, eval = FALSE}
+install.packages(c("Seurat", "remotes", "ggplot2", "patchwork", "Matrix", "RANN", "dplyr", "tidyr"))
+remotes::install_github("satijalab/seurat-data")
+SeuratData::InstallData("stxBrain")
+
+# juxtaposed (R >= 4.1; imports only Matrix, methods and stats)
+remotes::install_github("son9john/Spatial_singlecell_DL", subdir = "J/r/juxtaposed", ref = "juxtaposition-index")
+
+# Optional, faster SCTransform
+install.packages("BiocManager"); BiocManager::install("glmGamPoi")
+```
+
+`RANN` is optional but recommended: `spatial_graph()` uses it for fast nearest-neighbour search and falls back to a dense distance matrix without it.
+
+```{r libraries}
+library(Seurat)
+library(SeuratData)
+library(juxtaposed)
+library(Matrix)
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+
+# Default R (ggplot2) colours used throughout
+col_opposing   <- "#F8766D"   # boundary J, opposing
+col_regional   <- "#00BA38"   # regional J
+col_concordant <- "#619CFF"   # concordant / comparators
+col_ns         <- "#7F7F7F"
+div_cols  <- c("#3A3A98", "#619CFF", "#F7F7F7", "#F8766D", "#832424")
+expr_cols <- c("#F2F2F2", "#56B1F7", "#132B43")
+set.seed(2021)
+```
+
+# Starting point: a processed Seurat object
+
+J needs only two things from your object: a normalized, log-scale expression matrix and the spot coordinates. Any established preprocessing works, so this part is kept to the minimum; Seurat's own spatial vignette covers it in detail. We use the 10x Genomics sagittal mouse brain (anterior section 1) from SeuratData, the same section as the companion Scanpy notebook.
+
+```{r preprocess}
+brain <- UpdateSeuratObject(LoadData("stxBrain", type = "anterior1"))
+brain <- SCTransform(brain, assay = "Spatial", verbose = FALSE)
+brain <- RunPCA(brain, assay = "SCT", verbose = FALSE)
+brain <- FindNeighbors(brain, reduction = "pca", dims = 1:30, verbose = FALSE)
+brain <- FindClusters(brain, resolution = 0.8, verbose = FALSE)
+brain <- RunUMAP(brain, reduction = "pca", dims = 1:30, verbose = FALSE)
+```
+
+```{r clusters, fig.height = 5}
+DimPlot(brain, reduction = "umap", label = TRUE) + NoLegend() |
+  SpatialDimPlot(brain, label = TRUE, label.size = 3) + NoLegend()
+```
+
+Before building the graph on your own data, remove spots outside the tissue and obvious artefacts: every edge of the graph enters J. Filtering on depth alone is not recommended in structured tissue, where depth varies with anatomy (white matter has fewer counts).
+
+# Juxtaposition analysis
+
+## Build the spatial graph
+
+J is defined on a graph whose edges connect physically adjacent spots. On Visium, the six nearest neighbours reproduce the hexagonal lattice. Coordinates are read from the Seurat image, in the same order as the spots of the object.
+
+```{r graph}
+tissue_xy <- function(object, image = Images(object)[1]) {
+  xy <- GetTissueCoordinates(object, image = image)
+  xy <- xy[colnames(object)[colnames(object) %in% rownames(xy)], , drop = FALSE]
+  num <- vapply(xy, is.numeric, logical(1))
+  as.matrix(xy[, which(num)[1:2]])
+}
+xy <- tissue_xy(brain)
+stopifnot(identical(rownames(xy), colnames(brain)))
+
+G <- spatial_graph(xy, neighbors = 6)
+deg <- Matrix::rowSums(G > 0)
+table(degree = deg)
+```
+
+Most spots should have six neighbours; tissue edges have fewer. If the degree table is far from this (for example, many spots with more than six neighbours), check that the coordinates are spot centres in one consistent unit. For other platforms: use `neighbors = 6–10` for cell-level data (Xenium, MERFISH, CosMx), or `spatial_graph(xy, radius = r)` for a fixed physical radius.
+
+## Choose the gene panel
+
+All-pairs J scales with the square of the panel size. A panel of 100–500 genes is typical. Here: the 200 most variable SCT genes plus a few anatomical markers.
+
+```{r panel}
+markers <- c("Hpca", "Ttr", "Mbp", "Plp1", "Nrgn", "Calb2", "Pcp4", "Gfap", "Snap25", "Cck")
+panel <- unique(c(head(VariableFeatures(brain), 200), markers))
+panel <- intersect(panel, rownames(brain))
+
+X <- t(as.matrix(GetAssayData(brain, assay = "SCT", layer = "data")[panel, colnames(brain)]))
+X <- X[, apply(X, 2, sd) > 0]
+dim(X)   # spots x genes
+```
+
+Use normalized, log-scale values (SCT `data`, or `LogNormalize` data). J is scale-free per gene, so the choice between them changes little; raw counts are not recommended because depth differences then create spurious shared edges.
+
+## The spectral null, computed once
+
+The null distribution of J depends only on the graph, not on the genes. Compute it once per section and reuse it for every test.
+
+```{r null}
+t0 <- Sys.time()
+null <- spectral_null(G)
+Sys.time() - t0
+```
+
+## Boundary J for all pairs
+
+```{r juxtaposition}
+res <- juxtaposition(X, G, null = null, scale = 1)
+head(res, 10)
+```
+
+Each row is one unordered gene pair: `J` (effect size, between −1 and 1), `z` and `p` from the spectral sign-flip null, and Benjamini–Hochberg `q` over all pairs. `scale = 1` applies one step of graph smoothing before differencing, which suppresses spot-level noise; see the [robustness section](#robustness-to-the-smoothing-scale).
+
+```{r volcano, fig.height = 5}
+res <- res |>
+  mutate(call = case_when(q < 0.05 & J > 0 ~ "opposing (interface)",
+                          q < 0.05 & J < 0 ~ "concordant",
+                          TRUE ~ "not significant"))
+table(res$call)
+
+ggplot(res, aes(J, -log10(pmax(q, 1e-300)), colour = call)) +
+  geom_point(size = 0.8, alpha = 0.7) +
+  scale_colour_manual(values = c("opposing (interface)" = col_opposing, "concordant" = col_concordant,
+                                 "not significant" = col_ns)) +
+  geom_hline(yintercept = -log10(0.05), linetype = 2, colour = col_ns) +
+  labs(x = "boundary J", y = expression(-log[10]~q), colour = NULL,
+       title = "All gene pairs", subtitle = "Right: pairs that change in opposite directions across the same edges") +
+  theme_bw()
+```
+
+## The strongest interfaces
+
+```{r top}
+top_opposing <- res |> filter(q < 0.05, J > 0) |> arrange(desc(J)) |> head(15)
+top_opposing
+```
+
+Positive J means that where one gene rises across an edge, the other falls: two complementary programs meeting along a boundary. A pair can be strongly anticorrelated overall and still have J ≈ 0 if its two domains never touch; that is the information Pearson's r and Lee's L do not carry.
+
+## Map one interface
+
+`score_edges()` computes a local J on every edge, pooled over the edges incident to its two endpoints. The settings below (lazy smoother, 4 steps, ridge 1) are those of the preprint's known-truth localization benchmark; `signed_evidence` ranks strong opposing transitions first and localized interfaces best there.
+
+```{r edgemap, fig.width = 12, fig.height = 4.5}
+pair <- c(top_opposing$feature_x[1], top_opposing$feature_y[1])
+pair
+
+edges <- score_edges(X[, pair], G, scale = 4L, ridge = 1, smoother = "lazy")
+brain$interface <- edges_to_nodes(edges, ncol(brain), field = "signed_evidence")
+brain$local_J   <- edges_to_nodes(edges, ncol(brain), field = "j")
+
+lim <- max(abs(brain$interface), na.rm = TRUE)
+(SpatialFeaturePlot(brain, features = pair[1]) + scale_fill_gradientn(colours = expr_cols)) |
+  (SpatialFeaturePlot(brain, features = pair[2]) + scale_fill_gradientn(colours = expr_cols)) |
+  (SpatialFeaturePlot(brain, features = "interface") +
+     scale_fill_gradientn(colours = div_cols, limits = c(-lim, lim), name = "signed\nevidence"))
+```
+
+Red spots lie on edges where the two genes change in opposite directions: the interface between their domains.
+
+## Which clusters does the interface separate?
+
+For each pair of adjacent clusters, the mean signed evidence on the edges that cross between them. The top rows are the annotated boundaries the interface runs along; compare them with anatomy or with your cell-type annotation.
+
+```{r interface_clusters}
+cl <- as.character(Idents(brain))
+edges |>
+  mutate(a = cl[from], b = cl[to]) |>
+  filter(a != b) |>
+  mutate(boundary = paste(pmin(a, b), pmax(a, b), sep = " | ")) |>
+  group_by(boundary) |>
+  summarise(edges = n(), mean_evidence = mean(signed_evidence), .groups = "drop") |>
+  filter(edges >= 10) |>
+  arrange(desc(mean_evidence)) |>
+  head(10)
+```
+
+## Concordant pairs
+
+Negative J means the two genes change in the same direction across the same edges: they share a boundary on the same side. Expect anatomical markers of one region here.
+
+```{r concordant}
+res |> filter(q < 0.05, J < 0) |> arrange(J) |> head(10)
+```
+
+# Co-localization with regional J
+
+For "are these genes expressed in the same neighbourhoods?", use regional J. It averages an edge-sum concordance over graph scales 1, 2, 4, 8 and 16 steps, so it rewards shared regions at several sizes. It returns a score without a p-value.
+
+```{r regional, fig.width = 8, fig.height = 7.5}
+genes50 <- head(intersect(c(markers, VariableFeatures(brain)), colnames(X)), 50)
+R <- regional_juxtaposition_matrix(X[, genes50], G)
+dimnames(R) <- list(genes50, genes50)
+
+ord <- hclust(as.dist(1 - R), method = "average")$order
+long <- expand.grid(x = genes50[ord], y = genes50[ord], stringsAsFactors = FALSE)
+long$v <- R[cbind(long$y, long$x)]
+ggplot(long, aes(factor(x, genes50[ord]), factor(y, rev(genes50[ord])), fill = v)) +
+  geom_tile() + coord_equal() +
+  scale_fill_gradientn(colours = div_cols, limits = c(-1, 1), name = "regional J") +
+  labs(x = NULL, y = NULL, title = "Regional J: shared neighbourhood expression") +
+  theme_minimal(base_size = 9) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+```
+
+## Co-localized modules
+
+```{r modules}
+modules <- cutree(hclust(as.dist(1 - R), method = "average"), h = 0.6)
+split(names(modules), modules)[lengths(split(names(modules), modules)) > 1]
+```
+
+Each module is a set of genes that occupy the same neighbourhoods. Module scores (`AddModuleScore`) can then be mapped and compared across samples.
+
+# How boundary J relates to the established statistics
+
+`compare_indices()` returns J, Lee's L, bivariate Moran's I, Pearson's r and negative codispersion on the same graph.
+
+```{r compare, fig.height = 4.5}
+cmp <- compare_indices(X[, genes50], G)
+ggplot(cmp, aes(lee_L, J)) +
+  geom_hline(yintercept = 0, colour = col_ns) + geom_vline(xintercept = 0, colour = col_ns) +
+  geom_point(size = 0.9, alpha = 0.6, colour = col_concordant) +
+  labs(x = "Lee's L (level co-localization)", y = "boundary J (opposing change across edges)") +
+  theme_bw()
+```
+
+They answer different questions, so they are not expected to agree. Pairs with strongly negative L and J near zero are complementary but do not touch; pairs with J > 0 are complementary *and* meet at an interface.
+
+# Checks before reporting
+
+## Calibration on scrambled tissue
+
+Permuting each gene's values over the spots, independently for each gene, destroys all spatial structure and all dependence between genes, so the p-values should then be uniform. Permute genes independently: permuting whole spots keeps the genes' ordinary correlation, and correlated genes do change together across edges, so those pairs are correctly called.
+
+```{r calibration, fig.height = 4}
+Xperm <- apply(X[, 1:60], 2, sample)
+pp <- juxtaposition(Xperm, G, null = null, scale = 1)$p
+c(prop_p_below_0.05 = mean(pp < 0.05))
+ggplot(data.frame(p = pp), aes(p)) + geom_histogram(breaks = seq(0, 1, 0.05), fill = col_concordant, colour = "white") +
+  labs(title = "p-values on scrambled tissue (should be flat)") + theme_bw()
+```
+
+## Robustness to the smoothing scale
+
+```{r robustness}
+scales_tested <- 0:3
+Js <- sapply(scales_tested, function(s) {
+  r <- juxtaposition(X[, genes50], G, scale = s, test = FALSE)
+  r <- r[order(r$feature_x, r$feature_y), ]
+  r$J
+})
+colnames(Js) <- paste0("scale_", scales_tested)
+round(cor(Js, method = "spearman"), 3)
+```
+
+High rank correlations mean the conclusions do not hinge on the smoothing choice. Report the scale you used.
+
+## Replication across sections
+
+Run the same analysis on a second section and combine per-pair z-scores with Stouffer's method. Pairs called on one section only deserve caution.
+
+```{r replicate}
+run_section <- function(type) {
+  obj <- UpdateSeuratObject(LoadData("stxBrain", type = type))
+  obj <- SCTransform(obj, assay = "Spatial", verbose = FALSE)
+  g <- spatial_graph(tissue_xy(obj), neighbors = 6)
+  genes <- intersect(colnames(X), rownames(obj[["SCT"]]))
+  x <- t(as.matrix(GetAssayData(obj, assay = "SCT", layer = "data")[genes, colnames(obj)]))
+  x <- x[, apply(x, 2, sd) > 0]
+  juxtaposition(x, g, scale = 1)
+}
+res2 <- run_section("anterior2")
+both <- inner_join(res, res2, by = c("feature_x", "feature_y"), suffix = c("_1", "_2")) |>
+  mutate(z_combined = (z_1 + z_2) / sqrt(2),
+         p_combined = 2 * pnorm(-abs(z_combined)),
+         q_combined = p.adjust(p_combined, "BH"))
+c(J_correlation = cor(both$J_1, both$J_2, use = "complete.obs"))
+both |> filter(q_combined < 0.05, J_1 > 0, J_2 > 0) |> arrange(desc(z_combined)) |>
+  select(feature_x, feature_y, J_1, J_2, z_combined, q_combined) |> head(10)
+```
+
+Stouffer's combination assumes independent sections. For serial sections of one animal, treat the combined value as descriptive.
+
+# Export
+
+```{r export, eval = FALSE}
+write.csv(res, "boundary_J_all_pairs.csv", row.names = FALSE)
+write.csv(R, "regional_J_matrix.csv")
+saveRDS(list(graph = G, null = null), "anterior1_graph_and_null.rds")   # reuse the null later
+saveRDS(brain, "anterior1_with_interface.rds")
+```
+
+The Python package (`pip install` from `J/python` in the repository) gives the same numbers from AnnData with `juxtaposed.from_anndata()`.
+
+# Reporting checklist
+
+- Graph: construction (k nearest neighbours or radius), *k*, and the degree distribution.
+- Expression values: assay and normalization.
+- Panel: how genes were chosen, and the number of pairs tested.
+- Score and question: boundary J for interfaces; regional J for co-localization.
+- Scale (smoothing steps) for boundary J, and the robustness check.
+- Inference: spectral sign-flip null, two-sided, with Benjamini–Hochberg q over all pairs tested.
+- Edge maps: `score_edges()` settings (smoother, scale, ridge) and the field shown.
+- Replication across sections, if available.
+
+**Methods sentence you can adapt.** "Spot adjacency was defined by the six nearest neighbours on the Visium lattice. For each gene pair, the juxtaposition index J (juxtaposed v0.4.0) was computed after one step of graph smoothing, and two-sided p-values were obtained from the exact spectral sign-flip null of the tissue graph, with Benjamini–Hochberg correction over all pairs. Interfaces were mapped with edge-level J (lazy smoother, four steps, ridge 1). Co-localization was assessed with regional J over graph scales 1–16."
+
+# Session information
+
+```{r session}
+sessionInfo()
+```
