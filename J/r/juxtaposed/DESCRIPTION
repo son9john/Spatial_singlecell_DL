@@ -1,0 +1,25 @@
+Package: juxtaposed
+Type: Package
+Title: The Juxtaposition Index J for Spatial Omics
+Version: 0.4.0
+Authors@R: c(
+    person("Junho", "Song", role = c("aut", "cre"),
+           email = "maintainer.email@to-be-confirmed.org"),
+    person("Dongjoo", "Lee", role = "aut"),
+    person("Jaesung", "Yoo", role = "aut"),
+    person("Kwangsoo", "Kim", role = "aut"))
+Description: Computes the juxtaposition index J, a bounded gradient-domain
+    bivariate statistic that measures whether two features change in opposite
+    or concordant directions across the same edges of a spatial graph, together
+    with a regional edge-sum concordance score, Lee's L, bivariate Moran's I, Pearson correlation and codispersion on
+    the same graph. Provides an exact spectral sign-flip (Moran spectral
+    randomization) null with closed-form variances, which gives calibrated
+    p-values for all feature pairs without permutations.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports: Matrix, methods, stats
+Suggests: RANN, testthat (>= 3.0.0)
+Config/testthat/edition: 3
+URL: https://github.com/Spatial-Transcriptomics-L/J-analysis
+BugReports: https://github.com/Spatial-Transcriptomics-L/J-analysis/issues
