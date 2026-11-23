@@ -38,10 +38,28 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Restore the example dataset
+        id: example-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: _site/example/visium_mouse_brain
+          key: example-${{ hashFiles('J/site/tools/make_example.py') }}
       - name: Example dataset (10x Visium mouse brain, CC BY 4.0)
+        id: example
+        if: steps.example-cache.outputs.cache-hit != 'true'
+        continue-on-error: true   # a download problem at 10x must not stop the site from publishing
         run: |
           python -m pip install h5py numpy scipy
           python J/site/tools/make_example.py _site/example/visium_mouse_brain
+      - name: Save the example dataset
+        if: steps.example.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: _site/example/visium_mouse_brain
+          key: example-${{ hashFiles('J/site/tools/make_example.py') }}
+      - name: Drop an incomplete example
+        if: steps.example.outcome == 'failure'
+        run: rm -rf _site/example
       - name: Export the Python app
         run: |
           python -m pip install --upgrade shinylive

@@ -10,6 +10,7 @@ import argparse
 import json
 import os
 import shutil
+import subprocess
 import tarfile
 import tempfile
 import urllib.request
@@ -22,6 +23,16 @@ SAMPLE = "V1_Mouse_Brain_Sagittal_Anterior"
 BASE = f"https://cf.10xgenomics.com/samples/spatial-exp/1.1.0/{SAMPLE}/{SAMPLE}_"
 MARKERS = ["Hpca", "Ttr", "Mbp", "Plp1", "Nrgn", "Calb2", "Pcp4", "Gfap", "Snap25", "Cck", "Penk", "Ppp1r1b",
            "Rgs14", "Prox1", "C1ql2", "Slc17a7", "Gad1", "Mobp", "Enpp2", "Prkcd"]
+
+
+def fetch(url, path):
+    """Download as 10x Genomics documents it, with curl: their CDN refuses Python's default user agent."""
+    if shutil.which("curl"):
+        subprocess.run(["curl", "-fsSL", "--retry", "3", "-o", path, url], check=True)
+        return
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (juxtaposed example builder)"})
+    with urllib.request.urlopen(req, timeout=300) as r, open(path, "wb") as fh:
+        shutil.copyfileobj(r, fh)
 
 
 def strings(ds):
@@ -56,8 +67,8 @@ def main():
     tmp = tempfile.mkdtemp()
     h5_path = os.path.join(tmp, "matrix.h5")
     tar_path = os.path.join(tmp, "spatial.tar.gz")
-    urllib.request.urlretrieve(BASE + "filtered_feature_bc_matrix.h5", h5_path)
-    urllib.request.urlretrieve(BASE + "spatial.tar.gz", tar_path)
+    fetch(BASE + "filtered_feature_bc_matrix.h5", h5_path)
+    fetch(BASE + "spatial.tar.gz", tar_path)
 
     with h5py.File(h5_path, "r") as f:
         g = f["matrix"]
