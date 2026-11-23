@@ -17,7 +17,7 @@ __all__ = ["JResult", "juxtaposition", "compare", "from_anndata", "score_pairs"]
 
 @dataclass
 class JResult:
-    """All-pairs J with optional calibrated statistics.
+    """All-pairs J with optional spectral-null statistics.
 
     Attributes
     ----------
@@ -26,6 +26,8 @@ class JResult:
     scale : number of smoothing steps used.
     z, p, q : spectral-null z-scores, two-sided p-values and Benjamini–Hochberg q-values
         (q computed over the p(p-1)/2 unique pairs); ``None`` when ``test=False``.
+    extra : ``modes`` (effective spectral modes behind each null variance) and ``p_method``
+        ('normal' or 'monte_carlo').
     """
 
     J: np.ndarray
@@ -54,7 +56,8 @@ class JResult:
             if val is not None:
                 cols[key] = val[iu, ju]
         for key, mat in self.extra.items():
-            cols[key] = mat[iu, ju]
+            if np.ndim(mat) == 2:
+                cols[key] = mat[iu, ju]
         try:
             import pandas as pd
         except ImportError:  # pragma: no cover
@@ -84,7 +87,8 @@ def _names(features, p):
 def juxtaposition(values, graph, *, features=None, scale: int = 1, test: bool = True,
                   null: SpectralNull | None = None, max_nodes: int = 20000,
                   power: float = 1.0, laplacian: str = "combinatorial", dtype=None,
-                  backend: str = "cpu") -> JResult:
+                  backend: str = "cpu", method: str = "normal", n_draws: int = 4000,
+                  seed: int | None = 0) -> JResult:
     """Compute J for every pair of features, with approximate spectral-null p-values by default.
 
     Parameters
@@ -101,6 +105,9 @@ def juxtaposition(values, graph, *, features=None, scale: int = 1, test: bool = 
     dtype : ``np.float32`` for about twice the speed (relative error ~1e-6).
     backend : 'cpu' (default), 'auto', 'mlx' or 'torch' for the J matrix when
         ``test=False``; spectral inference runs on the CPU.
+    method : 'normal' (default), 'auto' or 'monte_carlo' p-values under the spectral null; 'auto'
+        samples ``n_draws`` sign flips only for pairs whose null rests on fewer than 20 spectral modes
+        (see ``extra['modes']``).
     """
     values = np.asarray(values, dtype=float)
     names = _names(features, values.shape[1])
@@ -112,7 +119,7 @@ def juxtaposition(values, graph, *, features=None, scale: int = 1, test: bool = 
     if null is not None and getattr(null, "laplacian", "combinatorial") != laplacian:
         raise ValueError("the supplied SpectralNull uses a different laplacian")
     null = null or SpectralNull(graph, max_nodes=max_nodes, laplacian=laplacian)
-    out = null.test_j(values, scale=scale, power=power, dtype=dtype)
+    out = null.test_j(values, scale=scale, power=power, dtype=dtype, method=method, n_draws=n_draws, seed=seed)
     # J itself comes from the same spectral Gram (identical to the edge form up to rounding)
     jmat = out["stat"].copy()
     ok = np.isfinite(out["sd"]).any(axis=0)  # features with nonzero variance
@@ -121,7 +128,8 @@ def juxtaposition(values, graph, *, features=None, scale: int = 1, test: bool = 
     q = np.full_like(out["p"], np.nan)
     q[iu] = bh_qvalues(out["p"][iu])
     q = np.where(np.isnan(q), q.T, q)
-    return JResult(jmat, names, scale, out["z"], out["p"], q)
+    return JResult(jmat, names, scale, out["z"], out["p"], q,
+                   extra={"modes": out["modes"], "p_method": out["method"]})
 
 
 def compare(values, graph, *, features=None, scale: int = 1):

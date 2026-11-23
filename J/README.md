@@ -12,10 +12,12 @@ J is positive when one gene rises where the other falls. It lies between −1 an
 
 | Folder | What it holds |
 |---|---|
-| `python/` | Python package `juxtaposed` 0.4.0 |
+| `python/` | Python package `juxtaposed` 0.5.0 (adds Monte Carlo spectral p-values and effective spectral modes) |
 | `r/` | R package `juxtaposed` 0.4.0 |
-| `manuscript/` | Preprint manuscript (v14) as PDF and Markdown source |
-| `analysis/` | Scripts that draw the manuscript figures and build the manuscript |
+| `manuscript/` | Preprint manuscript v15 (PDF) |
+| `analysis/code/` | Scripts that draw the manuscript figures |
+| `analysis/benchmark/` | Benchmark scripts and result tables; Monte Carlo checks in `benchmarks/v3/mc_check`; post hoc experiments of the Supplementary Results in `experiments/` and `revisions/` |
+| `site/` | Website: apps for R and Python, Seurat vignette, Scanpy notebook (<https://son9john.github.io/Spatial_singlecell_DL/>) |
 
 ## Install
 
@@ -29,8 +31,11 @@ R CMD INSTALL J/r/juxtaposed             # R
 ```python
 import juxtaposed as jx
 graph = jx.spatial_graph(coords, neighbors=6)
-res = jx.juxtaposition(expr, graph, features=genes)   # J, z, p and q for every gene pair
+res = jx.juxtaposition(expr, graph, features=genes, method="auto")
 res.top(20)
 ```
+
+`res.table()` lists J, z, p and q for every gene pair, and `modes`, the number of spectral modes behind each test. With
+`method="auto"`, pairs with fewer than 20 modes get Monte Carlo sign-flip p-values instead of the normal approximation.
 
 The 2021 files in the repository root are unchanged. Their original commit dates are in the history (`git log --diff-filter=A --date=iso --name-only`).

@@ -350,17 +350,28 @@ def figure4(crc):
                     color=INK, arrowprops=dict(arrowstyle="-", color=INK2, lw=0.5))
     panel(ax, "A")
     ax = fig.add_subplot(gs[0, 2])
-    lim = 22
-    ax.scatter(np.abs(crc.lee_z).clip(0, lim), np.abs(crc.J1_z).clip(0, lim), s=1, color=BLUE, alpha=0.15,
-               linewidths=0, rasterized=True)
-    ax.plot([0, lim], [0, lim], color=INK2, lw=0.7, ls="--")
-    ax.axvline(1.96, color=ORANGE, lw=0.7)
-    ax.axhline(1.96, color=BLUE, lw=0.7)
-    ax.set_xlim(0, lim)
-    ax.set_ylim(0, lim)
-    ax.set_xlabel("|z|, Lee's L (spectral null)")
-    ax.set_ylabel("|z|, J (spectral null)")
-    ax.set_title("Calibrated evidence", fontweight="normal", fontsize=8)
+    # v15: pairs called at q < 0.05 under the spectral sign-flip null, normal approximation and Monte Carlo
+    # (benchmarks/v3/mc_check: crc_mc.py for J and Pearson's r, crc_lee_mc.py for Lee's L)
+    mcd = RESULTS / "mc_check"
+    mc = pd.concat([pd.read_csv(mcd / "crc_mc_summary.csv"), pd.read_csv(mcd / "crc_lee_mc_summary.csv")]).set_index("stat")
+    rows = [("J1", "J", "#F8766D"), ("pearson", "Pearson", "#00BE67"), ("lee", "Lee", "#C77CFF")]
+    for i, (key, lab, col) in enumerate(rows):
+        for j, (meth, alpha) in enumerate((("norm_q05", 0.35), ("mc_q05", 1.0))):
+            v = float(mc.loc[key, meth])
+            y = i + (j - 0.5) * 0.38
+            ax.barh(y, v, height=0.36, color=col, alpha=alpha, linewidth=0)
+            ax.text(v + 2, y, f"{v:.1f}", va="center", fontsize=6.5, color=INK if j else INK2)
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([lab for _, lab, _ in rows])
+    ax.invert_yaxis()
+    ax.set_xlim(0, 105)
+    ax.set_xticks([0, 50, 100])
+    ax.set_xlabel("Pairs called, q < 0.05 (%)")
+    from matplotlib.patches import Patch
+    ax.legend(handles=[Patch(facecolor=MUTED, alpha=0.35, label="Normal approx."),
+                       Patch(facecolor=MUTED, label="Monte Carlo")], fontsize=5.5, frameon=False,
+              loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=2, handlelength=1.0, columnspacing=0.8)
+    ax.set_title("Spectral sign-flip test", fontweight="normal", fontsize=8, pad=14)
     panel(ax, "B")
     for k, gname in enumerate(["EPCAM", "MGP"]):
         ax = fig.add_subplot(gs[1, k])

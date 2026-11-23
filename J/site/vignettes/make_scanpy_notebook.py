@@ -149,8 +149,10 @@ The null distribution depends only on the graph, so compute it once and reuse it
 
 code("""
 null = jx.SpectralNull(graph)
-res = jx.juxtaposition(values, graph, features=names, null=null, scale=1)
+res = jx.juxtaposition(values, graph, features=names, null=null, scale=1, method="auto")
 tab = res.table()
+print(f"p-values: {res.extra['p_method']}; effective spectral modes per pair: median {tab.modes.median():.0f}, "
+      f"fewer than 20 for {(tab.modes < 20).mean():.1%} of pairs")
 tab["call"] = np.select([(tab.q < 0.05) & (tab.J > 0), (tab.q < 0.05) & (tab.J < 0)],
                         ["opposing (interface)", "concordant"], "not significant")
 print(tab.call.value_counts().to_string())
@@ -161,6 +163,11 @@ md("""
 Each row is one unordered pair: `J` (between −1 and 1), `z` and `p` from the spectral sign-flip null, and
 Benjamini–Hochberg `q` over all pairs. `scale=1` applies one step of graph smoothing before differencing, which suppresses
 spot-level noise (see section 9).
+
+`modes` counts the spectral modes that carry each pair's null variance. The normal approximation behind `p` is reliable
+when many modes do; with few, it is too conservative. `method="auto"` keeps the normal p-values and replaces those of
+pairs with fewer than 20 modes by Monte Carlo sign-flip p-values (4,000 draws by default); `method="monte_carlo"` does so
+for every pair.
 """)
 
 code("""
@@ -382,13 +389,15 @@ md("""
 - Panel: how genes were chosen, and the number of pairs tested.
 - Score and question: boundary J for interfaces; regional J for co-localization.
 - Scale (smoothing steps) for boundary J, and the robustness check.
-- Inference: spectral sign-flip null, two-sided, with Benjamini–Hochberg q over all pairs tested.
+- Inference: spectral sign-flip null (normal approximation, or Monte Carlo for pairs with few effective modes), two-sided,
+  with Benjamini–Hochberg q over all pairs tested.
 - Edge maps: `score_edges()` settings (smoother, scale, ridge) and the field shown.
 - Replication across sections, if available.
 
 **Methods sentence you can adapt.** "Spot adjacency was defined by the hexagonal Visium lattice. For each gene pair, the
-juxtaposition index J (juxtaposed v0.4.0) was computed after one step of graph smoothing, and two-sided p-values were obtained
-from the exact spectral sign-flip null of the tissue graph, with Benjamini–Hochberg correction over all pairs. Interfaces were
+juxtaposition index J (juxtaposed v0.5.0) was computed after one step of graph smoothing, and two-sided p-values were obtained
+from the spectral sign-flip null of the tissue graph (normal approximation; Monte Carlo p-values from 4,000 sign-flip draws
+for pairs with fewer than 20 effective spectral modes), with Benjamini–Hochberg correction over all pairs. Interfaces were
 mapped with edge-level J (lazy smoother, four steps, ridge 1). Co-localization was assessed with regional J over graph scales
 1–16."
 """)

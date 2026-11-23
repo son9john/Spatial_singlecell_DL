@@ -9,6 +9,7 @@ import base64
 import io
 import json
 import time
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -21,6 +22,7 @@ import readers as R
 COL_OPP, COL_CON, COL_REG, COL_NS = "#F8766D", "#619CFF", "#00BA38", "#BDBDBD"
 DIV_SCALE = [[0, "#3A3A98"], [0.25, "#619CFF"], [0.5, "#F7F7F7"], [0.75, "#F8766D"], [1, "#832424"]]
 EXPR_SCALE = [[0, "#F2F2F2"], [0.5, "#56B1F7"], [1, "#132B43"]]
+N_DRAWS = 2000  # Monte Carlo sign-flip draws for pairs with few spectral modes
 PLOTLY_JS = "https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"
 EXAMPLE_FALLBACK = "https://son9john.github.io/Spatial_singlecell_DL/example/"
 EXAMPLE_FILES = ["filtered_feature_bc_matrix.jx10x", "tissue_positions_list.csv", "scalefactors_json.json",
@@ -214,9 +216,23 @@ def methods_text(r) -> str:
             f"Expression was {p['normalization']}. {len(p['genes'])} genes were analysed ({p['panel_label']}). "
             f"For each of the {fmt_n(len(r['tab']))} gene pairs, the juxtaposition index J (juxtaposed Python package "
             f"v{jx.__version__}) was computed after {p['scale']} step(s) of graph smoothing, and two-sided p-values were "
-            "obtained from the exact spectral sign-flip null of the tissue graph, with Benjamini-Hochberg correction over "
-            "all pairs. Interfaces were mapped with edge-level J (lazy smoother, 4 steps, ridge 1). Co-localization was "
-            "scored with regional J over graph scales 1, 2, 4, 8 and 16.")
+            f"obtained from the spectral sign-flip null of the tissue graph ({p_value_text(p)}), with Benjamini-Hochberg "
+            "correction over all pairs. Interfaces were mapped with edge-level J (lazy smoother, 4 steps, ridge 1). "
+            "Co-localization was scored with regional J over graph scales 1, 2, 4, 8 and 16.")
+
+
+def p_value_text(p) -> str:
+    """How the p-values were obtained, for the Methods paragraph."""
+    modes = (f"median {p['modes_median']:.0f} effective spectral modes per pair"
+             if p.get("modes_median") is not None and np.isfinite(p["modes_median"]) else "")
+    if p.get("p_method") == "monte_carlo":
+        core = f"Monte Carlo p-values from {fmt_n(N_DRAWS)} sign-flip draws"
+    elif p.get("p_method") == "mixed":
+        core = (f"normal approximation, with Monte Carlo p-values from {fmt_n(N_DRAWS)} sign-flip draws for the "
+                f"{fmt_n(p['n_sampled'])} pairs with fewer than 20 effective spectral modes")
+    else:
+        core = "normal approximation"
+    return "; ".join(t for t in (core, modes) if t)
 
 
 # ---- UI ---------------------------------------------------------------------------------------
@@ -307,8 +323,14 @@ analyze_panel = ui.nav_panel(
             ui.input_checkbox("k_auto", "Choose neighbours automatically", True),
             ui.panel_conditional("!input.k_auto", ui.input_numeric("k", "Nearest neighbours", 6, min=3, max=20)),
             ui.input_slider("scale", "Smoothing steps for boundary J", 0, 4, 1),
+            ui.h6("P-values"),
+            ui.input_radio_buttons("p_method", None,
+                                   {"auto": "Normal approximation; Monte Carlo for pairs with fewer than 20 spectral modes",
+                                    "normal": "Normal approximation only (fastest)"}, selected="auto"),
+            ui.div(f"Monte Carlo uses {N_DRAWS:,} sign-flip draws and runs only for pairs whose null rests on few "
+                   "spectral modes, where the normal approximation is too conservative.", class_="jx-small"),
             ui.h6("Large datasets"),
-            ui.input_numeric("max_nodes", "Largest number of spots for the exact test", 4000, min=500, max=15000, step=500),
+            ui.input_numeric("max_nodes", "Largest number of spots for the spectral test", 4000, min=500, max=15000, step=500),
             ui.div("Larger data are grouped into small square bins first. About 15 s for 2,700 spots in the browser; "
                    "time grows with the cube of the number of spots.", class_="jx-small"),
             ui.output_ui("annotation_choice"),
@@ -369,14 +391,14 @@ help_panel = ui.nav_panel(
                    "and the files of the spatial folder (or the spatial.tar.gz that 10x distributes). For Visium HD use "
                    "binned_outputs/square_016um (or square_008um for small regions)."),
         ui.tags.li(ui.tags.b("10x Xenium: "), "cell_feature_matrix.h5 and cells.csv.gz. Cells are grouped into small square bins "
-                   "so that the exact test stays fast."),
+                   "so that the spectral test stays fast."),
         ui.tags.li(ui.tags.b("Tables: "), "one CSV/TSV with x, y and one column per gene, or two tables (expression and coordinates) "
                    "sharing cell IDs. CosMx (exprMat + metadata) and MERSCOPE (cell_by_gene + cell_metadata) files are recognized."),
         ui.tags.li(ui.tags.b("Seurat objects: "), "use the R app.")),
         ui.p("Everything runs in this browser tab: files are not uploaded to any server.", class_="jx-small")),
     ui.card(ui.card_header("Citation"),
-            ui.p("Song J, Kim J, Yoo J, Lee D, Kim K. The juxtaposition index J: calibrated detection of tissue interfaces "
-                 "in spatial transcriptomics. bioRxiv (2026)."),
+            ui.p("Song J, Kim J, Yoo J, Lee D, Kim K. The juxtaposition index J maps where spatial expression domains "
+                 "meet, with a spectral test for every gene pair. bioRxiv (2026)."),
             ui.p("Example data: 10x Genomics, Mouse Brain Serial Section 1 (Sagittal-Anterior), Visium, CC BY 4.0.",
                  class_="jx-small")),
     value="help")
@@ -606,7 +628,7 @@ def server(input, output, session):
                        else f"Use all {fmt_n(n)} spots."),
             ui.tags.li("Build the spatial neighbour graph (hexagonal for Visium, square for bins, nearest neighbours otherwise)."),
             ui.tags.li(step3),
-            ui.tags.li("Compute boundary J for every pair, with exact spectral p-values and Benjamini–Hochberg q-values."),
+            ui.tags.li("Compute boundary J for every pair, with spectral sign-flip p-values and Benjamini–Hochberg q-values."),
             ui.tags.li("Compute regional J (co-localization) for the same genes."))
 
     @reactive.effect
@@ -646,10 +668,21 @@ def server(input, output, session):
                 X, names = X[:, ok], [g for g, k in zip(names, ok) if k]
                 if X.shape[1] < 2:
                     raise ValueError("Fewer than two genes vary across the tissue; choose other genes.")
-                p.set(0.35, message=f"Exact spectral null for {fmt_n(X.shape[0])} spots")
+                p.set(0.35, message=f"Spectral null for {fmt_n(X.shape[0])} spots")
                 null = jx.SpectralNull(graph)
                 p.set(0.75, message=f"Boundary J for {fmt_n(X.shape[1] * (X.shape[1] - 1) // 2)} pairs")
-                tab = jx.juxtaposition(X, graph, features=names, null=null, scale=int(input.scale())).table(sort="J")
+                with warnings.catch_warnings(record=True) as caught:
+                    warnings.simplefilter("always")
+                    jres = jx.juxtaposition(X, graph, features=names, null=null, scale=int(input.scale()),
+                                            method=input.p_method(), n_draws=N_DRAWS, seed=0)
+                for w in caught:
+                    if "spectral modes" in str(w.message):
+                        ui.notification_show("Many pairs rest on few spectral modes; choose the Monte Carlo option "
+                                             "for their p-values.", type="warning", duration=10)
+                tab = jres.table(sort="J")
+                p_method = jres.extra.get("p_method", "normal")
+                modes = tab["modes"] if "modes" in tab else pd.Series(dtype=float)
+                n_sampled = int(np.sum(modes < 20)) if p_method == "mixed" else 0
                 tab["pair"] = tab["feature_x"] + " – " + tab["feature_y"]
                 tab["call"] = np.where((tab["q"] < 0.05) & (tab["J"] > 0), "interface (opposing)",
                                        np.where((tab["q"] < 0.05) & (tab["J"] < 0), "concordant", "not significant"))
@@ -660,7 +693,9 @@ def server(input, output, session):
                                        bin=bin_label, normalization=d.get("normalization", "as provided"), genes=names,
                                        panel_label={"svg": "most spatially variable by Moran's I", "hvg": "most variable",
                                                     "custom": "user-selected"}[input.panel_method()],
-                                       scale=int(input.scale()), seconds=time.time() - t0))
+                                       scale=int(input.scale()), seconds=time.time() - t0, p_method=p_method,
+                                       modes_median=float(modes.median()) if len(modes) else None,
+                                       n_sampled=n_sampled))
             except Exception as e:  # noqa: BLE001
                 return fail(e)
         result.set(res)
@@ -679,7 +714,9 @@ def server(input, output, session):
         sig = tab[tab["call"] == "interface (opposing)"]
         return ui.layout_columns(
             ui.value_box("Spots analyzed", fmt_n(r["params"]["n"]), r["params"]["graph"], theme="light"),
-            ui.value_box("Gene pairs tested", fmt_n(len(tab)), f"{len(r['names'])} genes, {r['params']['seconds']:.0f} s", theme="light"),
+            ui.value_box("Gene pairs tested", fmt_n(len(tab)), f"{len(r['names'])} genes, {r['params']['seconds']:.0f} s"
+                         + (f"; median {r['params']['modes_median']:.0f} spectral modes"
+                            if r["params"].get("modes_median") is not None else ""), theme="light"),
             ui.value_box("Interfaces (q < 0.05)", fmt_n(len(sig)), "pairs with opposing change across shared edges",
                          theme=ui.value_box_theme(bg="#FDE2DF", fg="#7A1F14")),
             ui.value_box("Strongest interface", sig["pair"].iloc[0] if len(sig) else "none at q < 0.05",
@@ -844,7 +881,8 @@ def server(input, output, session):
     def dl_pairs():
         r = result.get()
         req(r)
-        yield r["tab"][["feature_x", "feature_y", "J", "z", "p", "q", "call"]].to_csv(index=False)
+        cols = [c for c in ("feature_x", "feature_y", "J", "z", "p", "q", "modes", "call") if c in r["tab"]]
+        yield r["tab"][cols].to_csv(index=False)
 
     @render.download(filename="regional_J_matrix.csv")
     def dl_regional():

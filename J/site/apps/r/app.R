@@ -130,7 +130,7 @@ methods_text <- function(r) {
     "Spatial adjacency was defined as %s on %s %s%s. Expression was %s. ",
     "%d genes were analysed (%s). For each of the %s gene pairs, the juxtaposition index J ",
     "(juxtaposed R package v0.4.0) was computed after %d step(s) of graph smoothing, and two-sided p-values were ",
-    "obtained from the exact spectral sign-flip null of the tissue graph, with Benjamini-Hochberg correction over all pairs. ",
+    "obtained from the spectral sign-flip null of the tissue graph (normal approximation), with Benjamini-Hochberg correction over all pairs. ",
     "Interfaces were mapped with edge-level J (lazy smoother, 4 steps, ridge 1). Co-localization was scored with regional J ",
     "over graph scales 1, 2, 4, 8 and 16."),
     p$graph, fmt_n(p$n), p$unit_label, if (!is.null(p$bin)) paste0(" (", p$bin, ")") else "",
@@ -233,7 +233,7 @@ analyze_panel <- nav_panel(
       conditionalPanel("!input.k_auto", numericInput("k", "Nearest neighbours", 6, min = 3, max = 20)),
       sliderInput("scale", "Smoothing steps for boundary J", min = 0, max = 4, value = 1, step = 1),
       tags$h6("Large datasets"),
-      numericInput("max_nodes", "Largest number of spots for the exact test", 4000, min = 500, max = 15000, step = 500),
+      numericInput("max_nodes", "Largest number of spots for the spectral test", 4000, min = 500, max = 15000, step = 500),
       tags$div(class = "jx-small", "Larger data are grouped into small square bins first. About 20 s for 2,700 spots in the browser; time grows with the cube of the number of spots."),
       uiOutput("annotation_choice"),
       actionButton("run", "Run analysis", class = "btn-primary btn-lg w-100 mt-2", icon = icon("play"))
@@ -297,10 +297,10 @@ help_panel <- nav_panel(
   card(card_header("Input files"), tags$ul(
     tags$li(tags$b("Seurat object (.rds): "), "saved with saveRDS(). The app reads the spatial image (VisiumV1, VisiumV2, FOV, SlideSeq), the assay used by that image and its data layer (counts are log-normalized if no data layer exists). SCT assays work."),
     tags$li(tags$b("10x Visium / Visium HD: "), "from the Space Ranger outs folder select filtered_feature_bc_matrix.h5 and the files of the spatial folder (or the spatial.tar.gz that 10x distributes). For Visium HD use binned_outputs/square_016um (or square_008um for small regions)."),
-    tags$li(tags$b("10x Xenium: "), "cell_feature_matrix.h5 and cells.csv.gz. Cells are grouped into small square bins so that the exact test stays fast."),
+    tags$li(tags$b("10x Xenium: "), "cell_feature_matrix.h5 and cells.csv.gz. Cells are grouped into small square bins so that the spectral test stays fast."),
     tags$li(tags$b("Tables: "), "one CSV/TSV with x, y and one column per gene, or two tables (expression and coordinates) sharing cell IDs. CosMx (exprMat + metadata) and MERSCOPE (cell_by_gene + cell_metadata) files are recognized.")),
     tags$p(class = "jx-small", "Everything runs in this browser tab: files are not uploaded to any server. Very large objects (several GB) may exceed the browser's memory; use the juxtaposed R package directly for those (see the Seurat vignette).")),
-  card(card_header("Citation"), tags$p("Song J, Kim J, Yoo J, Lee D, Kim K. The juxtaposition index J: calibrated detection of tissue interfaces in spatial transcriptomics. bioRxiv (2026)."),
+  card(card_header("Citation"), tags$p("Song J, Kim J, Yoo J, Lee D, Kim K. The juxtaposition index J maps where spatial expression domains meet, with a spectral test for every gene pair. bioRxiv (2026)."),
        tags$p(class = "jx-small", "Example data: 10x Genomics, Mouse Brain Serial Section 1 (Sagittal-Anterior), Visium, CC BY 4.0."))
 )
 
@@ -542,7 +542,7 @@ server <- function(input, output, session) {
         svg = sprintf("Pick the %d most spatially variable genes (Moran's I) plus your genes.", input$n_genes),
         hvg = sprintf("Pick the %d most variable genes plus your genes.", input$n_genes),
         custom = "Use only your gene list.")),
-      tags$li("Compute boundary J for every pair, with exact spectral p-values and Benjamini–Hochberg q-values."),
+      tags$li("Compute boundary J for every pair, with spectral sign-flip p-values and Benjamini–Hochberg q-values."),
       tags$li("Compute regional J (co-localization) for the same genes."))
   })
 
@@ -578,7 +578,7 @@ server <- function(input, output, session) {
         X <- as.matrix(Matrix::t(d$data[panel$genes, , drop = FALSE]))
         X <- X[, apply(X, 2, stats::sd) > 0, drop = FALSE]
         if (ncol(X) < 2) stop("Fewer than two genes vary across the tissue; choose other genes.")
-        setProgress(0.35, sprintf("Exact spectral null for %s spots", fmt_n(nrow(X))))
+        setProgress(0.35, sprintf("Spectral null for %s spots", fmt_n(nrow(X))))
         null <- spectral_null(g$graph)
         setProgress(0.75, sprintf("Boundary J for %s pairs", fmt_n(ncol(X) * (ncol(X) - 1) / 2)))
         tab <- juxtaposition(X, g$graph, null = null, scale = input$scale)

@@ -1,0 +1,29 @@
+task,method,auroc
+touch_vs_apart,J1,0.5429332175925926
+touch_vs_apart,J4,0.6059373240740741
+touch_vs_apart,Lee_L,0.639966337962963
+touch_vs_apart,Pearson,0.6007296111111111
+touch_vs_apart,Regional_J,0.661492412037037
+touch_vs_apart,anisotropic_J,0.5499901851851852
+touch_vs_apart,cluster_J,0.5356198472222222
+touch_vs_apart,elbow_J,0.5382829444444445
+touch_vs_apart,fixed_positive_J,0.524313824074074
+touch_vs_apart,fixed_signed_J,0.5327536296296296
+touch_vs_apart,phase_J,0.5134959398148148
+touch_vs_apart,resolvent_J,0.55281625
+touch_vs_apart,wavelet_J,0.5684345648148148
+touch_vs_same,J1,0.6172526278659611
+touch_vs_same,J4,0.7971612169312169
+touch_vs_same,Lee_L,0.7739794444444444
+touch_vs_same,Pearson,0.7636078835978836
+touch_vs_same,Regional_J,0.7920102380952382
+touch_vs_same,anisotropic_J,0.643905925925926
+touch_vs_same,cluster_J,0.5933105467372134
+touch_vs_same,elbow_J,0.6003506261022927
+touch_vs_same,fixed_positive_J,0.5671279188712522
+touch_vs_same,fixed_signed_J,0.5925769664902999
+touch_vs_same,phase_J,0.529290291005291
+touch_vs_same,resolvent_J,0.6532614638447972
+touch_vs_same,wavelet_J,0.6636521075837742
+touch_vs_apart,Hotspot archive,0.6571759814814815
+touch_vs_same,Hotspot archive,0.7834312874779542

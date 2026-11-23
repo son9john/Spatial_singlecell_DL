@@ -1,0 +1,9 @@
+# Boundary J4 + regional J transfer in MERFISH
+
+2026-11-23 00:18 EST. Follow-up to the reported 0.755 DLPFC leave-one-donor-out result. Use the four archived Allen sections and the original CCF marker rules. Define contact as at least ten graph edges. Omit partial contacts of one to nine edges. The primary endpoint compares contacting versus separated structures (zero edges), exactly as in the archived transfer. As the cortical gain was largest with same-domain negatives included, repeat with same-structure marker pairs as a secondary endpoint.
+
+Freeze a logistic model trained exclusively on the human cortex DLPFC pairs. Evaluate it on MERFISH using expression-only within-section score ranks and the three inputs regional J, boundary J4, and product of their ranks. Use the same logistic setup and endpoint as the previously reported cortical comparison. In a separate sensitivity fit, use the other animal’s two MERFISH sections for the coefficients and choose all markers for each fold using only that training mouse. Keep the original regional score and comparators. Evaluate AUROC, AP, and top-20% Jaccard per section. Show paired differences. Four sections from two animals support a descriptive transfer statement.
+
+## Targeted-screen audit
+
+2026-11-23 00:20 EST. The provided DLPFC target analysis uses four diffusion steps and distance bandwidth 4, while its rotated empirical control uses one step and bandwidth 3. Reproduce the reported control, then recompute the same 151507 × 151673 rotation with both targeted settings. In an additional check exclude all six discovery genes from both null panels. Keep sizing, graph overlap and exact conditional numerator variance construction. Label the resulting normal p-value empirical-control rejection rates and the 144 marker-pair q-threshold rates descriptively. The target anatomy labels do not give molecular ground truth.

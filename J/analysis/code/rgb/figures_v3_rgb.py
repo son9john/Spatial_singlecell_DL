@@ -491,7 +491,7 @@ def figure7():
     ax.set_title("All-pairs statistic, 3,611 spots", fontweight="normal", fontsize=8)
     panel(ax, "A")
     ax = axes[1]
-    rows = [("J, spectral null (this work)", "J, calibrated p-values", "J"),
+    rows = [("J, spectral null (this work)", "J, spectral p-values", "J"),
             ("Pearson t-test (Scanpy/Seurat)", "Pearson t-test", "Scanpy/Seurat"),
             ("SpatialDM z-test", "SpatialDM z-test", "SpatialDM"), ("Hotspot Z", "Hotspot Z", "Hotspot"),
             ("LIANA+ Moran's R, 100 permutations", "LIANA+, 100 perm.", "LIANA+"),
@@ -503,7 +503,7 @@ def figure7():
     ax.barh(y, vals, height=0.62, color=[PKG[p] for _, _, p in rows], edgecolor="white", lw=0.5)
     for yy, v, (m, _, _) in zip(y, vals, rows):
         lab = f"{v:.0f} s" if v < 120 else f"{v / 60:.0f} min"
-        ax.text(v * 1.12, yy, lab + (" (calibrated)" if m.startswith("J") else ""), va="center", fontsize=6)
+        ax.text(v * 1.12, yy, lab, va="center", fontsize=6)
     ax.set_xscale("log")
     ax.set_xlim(1, 3e4)
     ax.set_yticks(y)

@@ -10,7 +10,7 @@ Quick start::
 
     import juxtaposed as jx
     graph = jx.spatial_graph(coords, neighbors=6)          # or jx.visium_graph(row, col)
-    res = jx.juxtaposition(expr, graph, features=genes)    # J + calibrated p/q for all pairs
+    res = jx.juxtaposition(expr, graph, features=genes)    # J + spectral-null p/q for all pairs
     res.top(20)                                            # most juxtaposed pairs
 """
 
@@ -27,7 +27,7 @@ from ._inference import SpectralNull, bh_qvalues, permutation_test
 from ._local import EdgeResult, juxtaposed_value, score_edges
 from ._fast import available_backends
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 __all__ = [
     "JResult", "SpectralNull", "EdgeResult", "available_backends", "bh_qvalues", "codispersion_matrix", "compare",

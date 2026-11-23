@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "juxtaposed"
-version = "0.4.0"
-description = "The juxtaposition index J: gradient-domain bivariate statistics with calibrated all-pairs inference for spatial omics"
+version = "0.5.0"
+description = "The juxtaposition index J: gradient-domain bivariate statistics with spectral-null inference for all gene pairs in spatial omics"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"

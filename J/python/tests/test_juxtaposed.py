@@ -356,3 +356,64 @@ def test_fast_gram_paths_match_direct_product():
     res32 = jx.juxtaposition(Z, g, scale=1, dtype=np.float32)
     assert np.allclose(res32.J[off], j_ref[off], atol=1e-4)
     assert np.allclose(res32.z[off], res.z[off], atol=1e-2)
+
+
+def _smooth_fields(n_side=18, genes=24, decay=0.5, seed=3):
+    """Independent smooth Gaussian fields: few spectral modes carry each null variance."""
+    rng = np.random.default_rng(seed)
+    xy = np.array([(i, j) for i in range(n_side) for j in range(n_side)], float)
+    g = jx.spatial_graph(xy, neighbors=4)
+    null = jx.SpectralNull(g)
+    amp = np.exp(-decay * null.mu * n_side)
+    X = null.U @ (amp[:, None] * rng.normal(size=(len(xy), genes)))
+    return g, null, X
+
+
+def test_modes_and_monte_carlo_pvalues():
+    """Smooth independent fields: Pearson's r rests on few modes and its normal p-values are too
+    conservative; Monte Carlo sign flips restore the nominal rejection rate. J rests on many modes,
+    and its normal and Monte Carlo p-values agree."""
+    g, null, X = _smooth_fields()
+    iu = np.triu_indices(X.shape[1], k=1)
+    with pytest.warns(RuntimeWarning, match="effective spectral modes"):
+        normal = null.test_pearson(X, method="normal")
+    mc = null.test_pearson(X, method="monte_carlo", n_draws=2000, seed=1)
+    assert np.nanmedian(normal["modes"][iu]) < 10 and mc["method"] == "monte_carlo"
+    rate_normal, rate_mc = np.mean(normal["p"][iu] < 0.05), np.mean(mc["p"][iu] < 0.05)
+    assert rate_normal < rate_mc and 0.02 < rate_mc < 0.09
+    auto = null.test_pearson(X, method="auto")  # samples the pairs with few modes
+    assert auto["sampled"][iu].mean() > 0.9 and auto["method"] in ("mixed", "monte_carlo")
+    rng = np.random.default_rng(5)
+    Y = rng.normal(size=X.shape)  # rough fields: many modes
+    jn = null.test_j(Y, method="normal")
+    assert np.nanmedian(jn["modes"][iu]) > 20
+    jm = null.test_j(Y, method="monte_carlo", n_draws=2000, seed=2)
+    assert np.nanmean(np.abs(jn["p"][iu] - jm["p"][iu])) < 0.03
+    lee = null.test_lee(X, method="monte_carlo", n_draws=500, seed=3)
+    assert np.isfinite(lee["p"][iu]).all() and np.isfinite(lee["modes"][iu]).all()
+
+
+
+def test_monte_carlo_on_selected_pairs_matches_full():
+    """'auto' forms null statistics only for the sampled pairs; with the same seed their p-values equal
+    those of the full Monte Carlo computation, for diagonal (J) and dense (Lee's L type) weights."""
+    g, null, X = _smooth_fields()
+    xh, _ = null.coefficients(X)
+    h = null.spectral_filter(1)
+    obs = (xh * h[:, None]).T @ xh
+    mask = np.zeros(obs.shape, dtype=bool)
+    mask[0, 1] = mask[1, 0] = mask[2, 5] = mask[5, 2] = True
+    full = null._monte_carlo(xh, h, obs, 300, 7)
+    part = null._monte_carlo(xh, h, obs, 300, 7, mask=mask)
+    assert np.array_equal(full[mask], part[mask])
+    rng = np.random.default_rng(0)
+    w = rng.normal(size=(xh.shape[0], xh.shape[0]))
+    w = (w + w.T) / 2
+    obs2 = xh.T @ w @ xh
+    a = null._monte_carlo(xh, w, obs2, 100, 4)
+    b = null._monte_carlo(xh, w, obs2, 100, 4, mask=mask)
+    assert np.allclose(a[mask], b[mask])
+    out = null.test_j(X, method="auto")
+    if out["sampled"].any():
+        mc = null.test_j(X, method="monte_carlo")
+        assert np.allclose(out["p"][out["sampled"]], mc["p"][out["sampled"]])

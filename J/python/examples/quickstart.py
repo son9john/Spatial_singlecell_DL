@@ -18,7 +18,7 @@ expr = np.column_stack([
 genes = ["geneA", "geneB", "geneC", "geneA2", "geneN"]
 
 graph = jx.spatial_graph(xy, neighbors=4)
-res = jx.juxtaposition(expr, graph, features=genes, scale=2)   # J + calibrated p, q
+res = jx.juxtaposition(expr, graph, features=genes, scale=2)   # J + spectral-null p, q
 print(res.table().round(3).to_string(index=False))
 # geneA-geneB: J > 0 (exclusive domains that touch)
 # geneA-geneC: J ~ 0 (exclusive, but no shared boundary)  <- Lee's L cannot tell these apart
