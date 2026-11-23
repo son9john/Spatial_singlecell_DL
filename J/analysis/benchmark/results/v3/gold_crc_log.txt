@@ -1,0 +1,15 @@
+              test  n_pairs  frac_p05  frac_q05
+         pearson_t    44850    0.9816    0.9816
+        spearman_t    44850    0.9789    0.9788
+       spatialdm_z    44850    0.4890    0.4886
+         hotspot_z    44850    0.4837    0.4824
+    spatialdm_perm    44850    0.4841    0.4828
+        liana_perm    44850    0.9813    0.9809
+     meringue_perm    44850    0.9819    0.9818
+      lee_perm    44850    0.4838    0.4825
+       J1_spectral    44850    0.8716    0.8676
+spatialdm_spectral    44850    0.5320    0.2104
+    liana_spectral    44850    0.5171    0.1433
+ meringue_spectral    44850    0.5259    0.1759
+  lee_spectral    44850    0.5097    0.0044
+  pearson_spectral    44850    0.5593    0.3265 81s

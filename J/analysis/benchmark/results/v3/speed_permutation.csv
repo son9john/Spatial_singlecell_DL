@@ -1,0 +1,7 @@
+task,genes,pairs,seconds
+LeeL_permutation999_all_pairs,100,4950,2.665250226000353
+J1_permutation999_all_pairs,100,4950,7.6227105319994735
+LeeL_permutation999_all_pairs,250,31125,9.949141121000139
+J1_permutation999_all_pairs,250,31125,23.52104696799961
+LeeL_permutation999_all_pairs,500,124750,37.37329621899971
+J1_permutation999_all_pairs,500,124750,61.6219225169998

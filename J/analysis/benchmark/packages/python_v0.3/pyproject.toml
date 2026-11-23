@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "juxtaposed"
+version = "0.3.0"
+description = "The juxtaposition index J: gradient-domain bivariate statistics with calibrated all-pairs inference for spatial omics"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Junho Song" },
+    { name = "Dongjoo Lee" },
+    { name = "Jaesung Yoo" },
+    { name = "Kwangsoo Kim" },
+]
+dependencies = ["numpy>=1.22", "scipy>=1.8"]
+keywords = [
+    "spatial transcriptomics", "spatial omics", "bivariate", "Lee's L", "Moran's I",
+    "codispersion", "spatial autocorrelation", "Visium", "MERFISH",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+[project.optional-dependencies]
+tables = ["pandas>=1.4"]
+plot = ["matplotlib>=3.5"]
+test = ["pytest>=7", "pandas>=1.4"]
+mlx = ["mlx>=0.32.4; platform_system == 'Darwin' and platform_machine == 'arm64' and python_version >= '3.10'"]
+
+[project.urls]
+Homepage = "https://github.com/Spatial-Transcriptomics-L/J-analysis"
+Issues = "https://github.com/Spatial-Transcriptomics-L/J-analysis/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

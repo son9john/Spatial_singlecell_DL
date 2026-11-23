@@ -1,0 +1,3 @@
+C embryo1 n=10150 3s
+C embryo2 n=7661 6s
+C embryo3 n=11169 9s

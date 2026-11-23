@@ -1,0 +1,23 @@
+{
+  "hardware": {
+    "device_name": "Apple M4 Max",
+    "max_recommended_working_set_size": 30150672384,
+    "memory_size": 38654705664,
+    "architecture": "applegpu_g16s",
+    "max_buffer_length": 22613000192,
+    "resource_limit": 499000
+  },
+  "platform": "macOS-27.3-arm64-arm-64bit",
+  "python": "3.12.13",
+  "mlx": "0.32.4",
+  "numpy": "2.5.5",
+  "scipy": "1.18.1",
+  "blas": "accelerate",
+  "threads": {
+    "VECLIB_MAXIMUM_THREADS": "10",
+    "OPENBLAS_NUM_THREADS": "10"
+  },
+  "legacy_bsc_git_revision": "94156124a90602450cef30d428b849ab4f48048d",
+  "repeats": 7,
+  "timing": "warm complete scoring, input expression and graph in memory, dense output materialized"
+}

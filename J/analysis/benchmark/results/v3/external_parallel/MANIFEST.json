@@ -1,0 +1,81 @@
+{
+ "snapshot_utc": "2026-11-22T14:56:27Z",
+ "source": "J-analysis/results of the parallel analyses (preprint v3 known-truth benchmark; package_comparison with official LIANA+ 2.1.1 / SpatialDM 0.3.1 incl. edge IoU; seqFISH contact-rate benchmark; Apple M4 Max timings including the lab\u2019s 2021 BSC kernel)",
+ "files": [
+  {
+   "file": "apple_silicon_all_pairs_parity.csv",
+   "sha256": "ef34d010398aee4037e37d1094b47f07e9f7c077317bafcb91101e2aa0f87c89",
+   "bytes": 1697
+  },
+  {
+   "file": "apple_silicon_all_pairs_summary.csv",
+   "sha256": "4d979e4639e37d9e7787135f69e294232aa6ce3ee67c500665c832a15ae5638e",
+   "bytes": 4000
+  },
+  {
+   "file": "apple_silicon_metadata.json",
+   "sha256": "2fdc6a9688d53472ac3dac1a8e794867d582ca10236592c42ee0ae998be1829e",
+   "bytes": 679
+  },
+  {
+   "file": "geometry_sources.csv",
+   "sha256": "57a9ed28a5a2bf3f5d5f36c5b372dea235d1649de234f5631dc437cd0069f153",
+   "bytes": 452
+  },
+  {
+   "file": "global_pair_iou.csv",
+   "sha256": "80102ebfc81bc6327b3ba0a75d80e18071aa9ea03e3a9f4bfddc8048a3378333",
+   "bytes": 108427
+  },
+  {
+   "file": "heldout_summary.csv",
+   "sha256": "5f4073afef9d5bd8f99dd87cfdf5ca9e7f358505529be27e041f2e74cdbcfb88",
+   "bytes": 11291
+  },
+  {
+   "file": "imbalance_auc.csv",
+   "sha256": "45ff93e87862a25b874f2c0b2970d4bf0075ed0959a63f374c7a278016832da4",
+   "bytes": 2036
+  },
+  {
+   "file": "local_paired.csv",
+   "sha256": "b415346f9e2d63481a8cc26208c2915f552a0509ae6bc4f5e63217c2a6887c90",
+   "bytes": 9653
+  },
+  {
+   "file": "local_replicates.csv",
+   "sha256": "a3381b76c43e70437a271af24c9d76747a1debf167edf3c26c781e3cf331f567",
+   "bytes": 88803
+  },
+  {
+   "file": "local_summary.csv",
+   "sha256": "f49bed8ee4c249b61d508ca5cfab76ec320b73f344b5d5ccdc87069d64cc1edd",
+   "bytes": 5464
+  },
+  {
+   "file": "merfish_edge_iou.csv",
+   "sha256": "34abc19bcce790b754e1d90b3931e2d76249f78fe81de53693f0408a3a911692",
+   "bytes": 725932
+  },
+  {
+   "file": "seqfish_celltype_contact_recovery.csv",
+   "sha256": "b1f45634f6337501de2610b36efe21463d8c4a407c34a3fb02154fcbc5b185f8",
+   "bytes": 2222
+  },
+  {
+   "file": "seqfish_edge_iou.csv",
+   "sha256": "0f7b59b779a92b741952efd58f96712b6f05e8d9718900e5bff56054896e6780",
+   "bytes": 202893
+  },
+  {
+   "file": "seqfish_global_benchmark.csv",
+   "sha256": "109dd4d8d50bb80a622fd2ee3e5ade034ef7317a4e139b0b36539ff4ec59f060",
+   "bytes": 8040
+  },
+  {
+   "file": "seqfish_interface_scores.csv",
+   "sha256": "99a9722773f86ffed3c42e09e1f2ec4d85f9dfaedcf38187b13621c9f1785346",
+   "bytes": 22139
+  }
+ ]
+}

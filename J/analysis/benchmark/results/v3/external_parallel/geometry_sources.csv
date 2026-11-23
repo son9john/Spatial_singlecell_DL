@@ -1,0 +1,3 @@
+path,source_url,bytes,sha256
+data/heldout/ABCA3-cells.csv,https://allen-brain-cell-atlas.s3.us-west-2.amazonaws.com/metadata/Zhuang-ABCA-3/20231215/cell_metadata.csv,310416537,289973499508857cbb9c6c1b781bdce97907bd60fd61e6ef69c059f13acfdeab
+data/heldout/ABCA4-cells.csv,https://allen-brain-cell-atlas.s3.us-west-2.amazonaws.com/metadata/Zhuang-ABCA-4/20231215/cell_metadata.csv,31941820,79b565f4b79fb42fcd652ca126efc871ad173b1ee442a745b3b0da9d8b0d4b46
