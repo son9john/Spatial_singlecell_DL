@@ -48,13 +48,13 @@
 
   <div class="grid">
     <a class="card" href="r/" style="--c: var(--blue)">
-      <h2>App for R users</h2>
-      <p>Point-and-click analysis: upload a table of spots and genes, or try the demo tissue. Pair tables, interface maps and co-localization, in your browser.</p>
+      <h2>App for R and Seurat users</h2>
+      <p>Point and click: open a Seurat object (.rds), a 10x Visium, Visium HD or Xenium output, or any table, or try a real 10x mouse brain section. Interfaces on the H&amp;E image, co-localization, downloads and a Methods paragraph.</p>
       <span class="go">Open the R app →</span>
     </a>
     <a class="card" href="python/" style="--c: var(--green)">
-      <h2>App for Python users</h2>
-      <p>The same pipeline built on the Python package: data, graph, boundary J, edge map, regional J, download.</p>
+      <h2>App for Python and Scanpy users</h2>
+      <p>The same analysis for AnnData (.h5ad), 10x Visium, Visium HD and Xenium outputs, and tables, built on the Python package.</p>
       <span class="go">Open the Python app →</span>
     </a>
     <a class="card" href="vignette/seurat_juxtaposition.html" style="--c: var(--red)">
@@ -93,7 +93,7 @@ remotes::install_github("son9john/Spatial_singlecell_DL", subdir = "J/r/juxtapos
 pip install "git+https://github.com/son9john/Spatial_singlecell_DL@juxtaposition-index#subdirectory=J/python"</code></pre>
 
   <p>The apps run entirely in your browser with WebAssembly (Shinylive). The first load downloads R or Python and takes 20–60 seconds;
-    data you upload stay on your computer.</p>
+    data you open stay on your computer. Example data: 10x Genomics, Mouse Brain Serial Section 1 (Sagittal-Anterior), CC BY 4.0.</p>
 
   <footer>
     Junho Song, Jihyun Kim, Jaesung Yoo, Dongjoo Lee, Kwangsoo Kim. J extends the Lee's L code of this repository (2021).

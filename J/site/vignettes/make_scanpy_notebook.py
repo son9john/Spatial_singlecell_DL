@@ -204,12 +204,27 @@ edges = jx.score_edges(values[:, [ix, iy]], graph, scale=4, ridge=1.0, smoother_
 adata.obs["interface"] = edges.to_nodes(adata.n_obs, field="signed_evidence")
 adata.obs["local_J"] = edges.to_nodes(adata.n_obs, field="j")
 
+def spot_map(ax, values, cmap, title, vmin=None, vmax=None, vcenter=None):
+    # Spots coloured by a value; spots without a value (NaN) are drawn in light grey.
+    xy = adata.obsm["spatial"]
+    v = np.asarray(values, dtype=float)
+    ok = np.isfinite(v)
+    ax.scatter(xy[~ok, 0], xy[~ok, 1], c="#D9D9D9", s=6, linewidths=0)
+    norm = TwoSlopeNorm(vcenter, vmin, vmax) if vcenter is not None else None
+    sc_ = ax.scatter(xy[ok, 0], xy[ok, 1], c=v[ok], cmap=cmap, norm=norm, s=6, linewidths=0,
+                     vmin=None if norm else vmin, vmax=None if norm else vmax)
+    ax.set_aspect("equal"); ax.invert_yaxis(); ax.set_axis_off(); ax.set_title(title)
+    plt.colorbar(sc_, ax=ax, shrink=0.7)
+
+def expression(gene):
+    x = adata[:, gene].X
+    return np.asarray(x.toarray() if hasattr(x, "toarray") else x).ravel()
+
 lim = np.nanmax(np.abs(adata.obs["interface"]))
 fig, axs = plt.subplots(1, 3, figsize=(15, 4.5))
-sc.pl.spatial(adata, color=gx, cmap=EXPR, ax=axs[0], show=False, size=1.3)
-sc.pl.spatial(adata, color=gy, cmap=EXPR, ax=axs[1], show=False, size=1.3)
-sc.pl.spatial(adata, color="interface", cmap=DIV, vmin=-lim, vmax=lim, ax=axs[2], show=False, size=1.3,
-              title=f"interface: {gx} vs {gy}")
+spot_map(axs[0], expression(gx), EXPR, gx)
+spot_map(axs[1], expression(gy), EXPR, gy)
+spot_map(axs[2], adata.obs["interface"], DIV, f"interface: {gx} vs {gy}", -lim, lim, vcenter=0)
 plt.tight_layout()
 """)
 

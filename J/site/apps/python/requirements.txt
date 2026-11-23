@@ -1,4 +1,6 @@
 numpy
 scipy
 pandas
-matplotlib
+h5py
+pyarrow
+pillow

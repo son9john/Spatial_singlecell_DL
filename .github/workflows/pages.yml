@@ -38,6 +38,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Example dataset (10x Visium mouse brain, CC BY 4.0)
+        run: |
+          python -m pip install h5py numpy scipy
+          python J/site/tools/make_example.py _site/example/visium_mouse_brain
       - name: Export the Python app
         run: |
           python -m pip install --upgrade shinylive
@@ -53,8 +57,14 @@ jobs:
             any::shiny
             any::bslib
             any::DT
-            any::ggplot2
+            any::plotly
             any::Matrix
+            any::jsonlite
+            any::png
+            any::jpeg
+            any::nanoparquet
+            any::RANN
+            any::data.table
       - name: Export the R app
         run: |
           mkdir -p J/site/apps/r/juxtaposed
@@ -151,26 +161,23 @@ jobs:
           name: seurat-vignette
           path: out
 
-  # Publishes the apps plus whichever vignettes succeeded; a failed vignette never takes the apps down.
-  deploy-full:
+  # Collects the apps plus whichever vignettes succeeded; a failed vignette never takes the apps down.
+  assemble:
     needs: [apps, deploy-quick, scanpy, seurat]
     if: ${{ always() && needs.apps.result == 'success' }}
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: apps-site
           path: _site
       - uses: actions/download-artifact@v4
-        continue-on-error: true
+        if: ${{ needs.scanpy.result == 'success' }}
         with:
           name: scanpy-vignette
           path: _site/vignette
       - uses: actions/download-artifact@v4
-        continue-on-error: true
+        if: ${{ needs.seurat.result == 'success' }}
         with:
           name: seurat-vignette
           path: _site/vignette
@@ -178,6 +185,16 @@ jobs:
         with:
           name: pages-full
           path: _site
+
+  # Deployment must run in its own job, after the job that uploaded the artifact.
+  deploy-full:
+    needs: assemble
+    if: ${{ always() && needs.assemble.result == 'success' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
         with:
