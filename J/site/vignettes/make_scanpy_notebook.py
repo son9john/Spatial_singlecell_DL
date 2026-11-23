@@ -101,7 +101,11 @@ adata
 code("""
 fig, axs = plt.subplots(1, 2, figsize=(11, 4.5))
 sc.pl.umap(adata, color="leiden", ax=axs[0], show=False, legend_loc="on data")
-sc.pl.spatial(adata, color="leiden", ax=axs[1], show=False, legend_loc=None, size=1.3)
+# Cluster map drawn directly from the spot coordinates, with the same colours as the UMAP
+xy = adata.obsm["spatial"]
+palette = dict(zip(adata.obs["leiden"].cat.categories, adata.uns["leiden_colors"]))
+axs[1].scatter(xy[:, 0], xy[:, 1], c=adata.obs["leiden"].map(palette).to_list(), s=6, linewidths=0)
+axs[1].set_aspect("equal"); axs[1].invert_yaxis(); axs[1].set_axis_off(); axs[1].set_title("leiden (tissue)")
 plt.tight_layout()
 """)
 

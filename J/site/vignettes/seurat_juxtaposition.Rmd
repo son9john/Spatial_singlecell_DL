@@ -49,12 +49,10 @@ Boundary J is not a co-expression statistic. Two genes that are expressed in the
 
 ## Installation
 
-Run once. Seurat v5, SeuratData and the juxtaposed package from this repository:
+Run once. Seurat v5 (with hdf5r to read 10x files) and the juxtaposed package from this repository:
 
 ```{r install, eval = FALSE}
-install.packages(c("Seurat", "remotes", "ggplot2", "patchwork", "Matrix", "RANN", "dplyr", "tidyr"))
-remotes::install_github("satijalab/seurat-data")
-SeuratData::InstallData("stxBrain")
+install.packages(c("Seurat", "hdf5r", "remotes", "ggplot2", "patchwork", "Matrix", "RANN", "dplyr", "tidyr"))
 
 # juxtaposed (R >= 4.1; imports only Matrix, methods and stats)
 remotes::install_github("son9john/Spatial_singlecell_DL", subdir = "J/r/juxtaposed", ref = "juxtaposition-index")
@@ -67,7 +65,6 @@ install.packages("BiocManager"); BiocManager::install("glmGamPoi")
 
 ```{r libraries}
 library(Seurat)
-library(SeuratData)
 library(juxtaposed)
 library(Matrix)
 library(ggplot2)
@@ -86,10 +83,23 @@ set.seed(2021)
 
 # Starting point: a processed Seurat object
 
-J needs only two things from your object: a normalized, log-scale expression matrix and the spot coordinates. Any established preprocessing works, so this part is kept to the minimum; Seurat's own spatial vignette covers it in detail. We use the 10x Genomics sagittal mouse brain (anterior section 1) from SeuratData, the same section as the companion Scanpy notebook.
+J needs only two things from your object: a normalized, log-scale expression matrix and the spot coordinates. Any established preprocessing works, so this part is kept to the minimum; Seurat's own spatial vignette covers it in detail. We use the 10x Genomics sagittal mouse brain (anterior section 1), downloaded directly from 10x Genomics: the same files the companion Scanpy notebook reads. For your own data, point `Load10X_Spatial()` at the Space Ranger output folder.
 
 ```{r preprocess}
-brain <- UpdateSeuratObject(LoadData("stxBrain", type = "anterior1"))
+options(timeout = 900)
+get_visium <- function(sample, dir = file.path("data", sample)) {
+  base <- sprintf("https://cf.10xgenomics.com/samples/spatial-exp/1.1.0/%s/%s_", sample, sample)
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  h5 <- file.path(dir, "filtered_feature_bc_matrix.h5")
+  if (!file.exists(h5)) download.file(paste0(base, "filtered_feature_bc_matrix.h5"), h5, mode = "wb")
+  if (!dir.exists(file.path(dir, "spatial"))) {
+    tgz <- tempfile(fileext = ".tar.gz")
+    download.file(paste0(base, "spatial.tar.gz"), tgz, mode = "wb")
+    untar(tgz, exdir = dir)
+  }
+  Load10X_Spatial(dir, filename = "filtered_feature_bc_matrix.h5", slice = "slice1")
+}
+brain <- get_visium("V1_Mouse_Brain_Sagittal_Anterior")
 brain <- SCTransform(brain, assay = "Spatial", verbose = FALSE)
 brain <- RunPCA(brain, assay = "SCT", verbose = FALSE)
 brain <- FindNeighbors(brain, reduction = "pca", dims = 1:30, verbose = FALSE)
@@ -312,7 +322,7 @@ Run the same analysis on a second section and combine per-pair z-scores with Sto
 
 ```{r replicate}
 run_section <- function(type) {
-  obj <- UpdateSeuratObject(LoadData("stxBrain", type = type))
+  obj <- get_visium(type)
   obj <- SCTransform(obj, assay = "Spatial", verbose = FALSE)
   g <- spatial_graph(tissue_xy(obj), neighbors = 6)
   genes <- intersect(colnames(X), rownames(obj[["SCT"]]))
@@ -320,7 +330,7 @@ run_section <- function(type) {
   x <- x[, apply(x, 2, sd) > 0]
   juxtaposition(x, g, scale = 1)
 }
-res2 <- run_section("anterior2")
+res2 <- run_section("V1_Mouse_Brain_Sagittal_Anterior_Section_2")
 both <- inner_join(res, res2, by = c("feature_x", "feature_y"), suffix = c("_1", "_2")) |>
   mutate(z_combined = (z_1 + z_2) / sqrt(2),
          p_combined = 2 * pnorm(-abs(z_combined)),

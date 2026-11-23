@@ -139,12 +139,11 @@ jobs:
             any::Matrix
             any::RANN
             bioc::glmGamPoi
-            github::satijalab/seurat-data
+            any::hdf5r
             local::./J/r/juxtaposed
       - name: Render the Seurat vignette
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          Rscript -e 'SeuratData::InstallData("stxBrain")'
           Rscript -e 'rmarkdown::render("J/site/vignettes/seurat_juxtaposition.Rmd", output_dir = "out")'
           cp J/site/vignettes/seurat_juxtaposition.Rmd out/
       - uses: actions/upload-artifact@v4
