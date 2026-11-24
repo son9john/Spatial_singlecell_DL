@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>juxtaposed · the juxtaposition index J</title>
-<meta name="description" content="Boundary J for tissue interfaces and regional J for co-localization in spatial transcriptomics, with a spectral sign-flip test for every gene pair. Apps for R and Python, a Seurat vignette and a Scanpy notebook.">
+<meta name="description" content="Boundary J for tissue interfaces and regional J for co-localization in spatial transcriptomics, with a spectral sign-flip test for every gene pair. Jetwork ranks tissue interfaces from a fitted gene network. Apps for R and Python, a Seurat vignette and a Scanpy notebook.">
 <style>
   :root {
     --ink: #1d1d1f; --muted: #5a5a5f; --line: #e3e3e6; --bg: #ffffff; --card: #fafafa;
@@ -37,6 +37,15 @@
   pre { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; overflow-x: auto; }
   footer { margin-top: 48px; color: var(--muted); font-size: 0.9rem; }
   .tablewrap { overflow-x: auto; }
+  .jetwork { margin: 28px 0 0; padding: 24px; border: 1px solid var(--line);
+             background: var(--card); border-radius: 10px; border-top: 4px solid var(--blue); }
+  .jetwork h2 { margin: 0 0 6px; font-size: 1.35rem; }
+  .jetwork p { margin: 8px 0; }
+  .jetwork ol { padding-left: 1.4rem; }
+  .jetwork .links { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+  .jetwork figure { margin: 16px 0 0; }
+  .jetwork img { display: block; width: 100%; height: auto; border-radius: 6px; }
+  .jetwork figcaption { margin-top: 6px; font-size: 0.9rem; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -45,7 +54,7 @@
   <p class="lede">Find where two expression programs meet in tissue. <strong>Boundary J</strong> scores whether two genes change in
     opposite directions across the same edges of the tissue graph: an interface. <strong>Regional J</strong> scores whether they
     share neighbourhoods. Boundary J comes with p-values from a spectral sign-flip test that keeps each gene's spatial
-    autocorrelation, with no permutations.</p>
+    autocorrelation, with no permutations. <a href="#jetwork">Use Jetwork to rank tissue boundaries.</a></p>
 
   <div class="grid">
     <a class="card" href="r/" style="--c: var(--blue)">
@@ -60,7 +69,7 @@
     </a>
     <a class="card" href="vignette/seurat_juxtaposition.html" style="--c: var(--red)">
       <h2>Seurat vignette (R)</h2>
-      <p>From a processed Seurat object to interfaces, maps, co-localized modules, calibration and replication checks, and a reporting checklist.</p>
+      <p>From a processed Seurat object to interfaces, maps, co-localized modules and a runnable Jetwork workflow with held-out annotations.</p>
       <span class="go">Read the vignette →</span>
     </a>
     <a class="card" href="vignette/scanpy_juxtaposition.html" style="--c: var(--purple)">
@@ -69,6 +78,29 @@
       <span class="go">Read the notebook →</span>
     </a>
   </div>
+
+  <section class="jetwork" id="jetwork" aria-labelledby="jetwork-title">
+    <h2 id="jetwork-title">Jetwork ranks transitions between tissue domains</h2>
+    <p>Fit a gene network that combines co-expression within regions with opposing expression changes across tissue edges.
+      Use it to nominate marker partners and map candidate boundaries in a new specimen.</p>
+    <ol>
+      <li>Fit <code>fit_jetwork(training)</code> on expression and spatial graphs from training specimens.</li>
+      <li>Run <code>score_jetwork_edges(model, expression, graph)</code> on a held-out section to rank its edges.</li>
+      <li>With held-out labels, use <code>evaluate_jetwork_edges(edges, annotations)</code> to measure average precision
+        and top-10% Jaccard at a matched prediction budget.</li>
+    </ol>
+    <p class="links"><a href="vignette/seurat_juxtaposition.html#jetwork">Run the Seurat example</a>
+      <a href="vignette/jetwork.R" download>Download Jetwork R helpers</a></p>
+    <p><strong>Held-out seqFISH embryos.</strong> Adding Jetwork raised mean boundary average precision from 0.446 to 0.704
+      and top-10% Jaccard from 0.122 to 0.274. DLPFC and MERFISH showed little improvement. The seqFISH labels were informed by
+      expression and anatomy. <a href="https://www.nature.com/articles/s41587-021-01006-2">Annotation methods</a></p>
+    <figure>
+      <img src="assets/jetwork_boundary_maps.png" width="2200" height="1540" loading="lazy"
+           alt="Annotated transitions and ranked tissue edges from the expression gradient and Jetwork in held-out DLPFC and seqFISH specimens.">
+      <figcaption>At the same top-10% budget, Jetwork matched 3,322 of 3,454 edges in the first seqFISH embryo.
+        The expression-gradient score matched 1,404.</figcaption>
+    </figure>
+  </section>
 
   <h3>Which score answers my question?</h3>
   <div class="tablewrap">

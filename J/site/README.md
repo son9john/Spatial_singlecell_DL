@@ -8,7 +8,8 @@ The workflow `.github/workflows/pages.yml` builds this folder and publishes it w
 | `/` | `index.html` | Landing page |
 | `/r/` | `apps/r/app.R` | Shiny app for R (Shinylive + webR, runs in the browser) |
 | `/python/` | `apps/python/app.py`, `apps/python/readers.py` | Shiny app for Python (Shinylive + Pyodide, runs in the browser) |
-| `/vignette/seurat_juxtaposition.html` | `vignettes/seurat_juxtaposition.Rmd` | Seurat vignette |
+| `/vignette/seurat_juxtaposition.html` | `vignettes/seurat_juxtaposition.Rmd` | Seurat vignette, including Jetwork training and held-out edge evaluation |
+| `/vignette/jetwork.R` | `vignettes/jetwork.R` | Downloadable Jetwork helpers for the Seurat example |
 | `/vignette/scanpy_juxtaposition.html` | `vignettes/scanpy_juxtaposition.ipynb` | Scanpy notebook (regenerate with `python vignettes/make_scanpy_notebook.py`) |
 
 The apps use the package sources in `J/python/src/juxtaposed` and `J/r/juxtaposed/R`; the workflow copies them next to each app.

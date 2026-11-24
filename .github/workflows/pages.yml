@@ -34,6 +34,8 @@ jobs:
         run: |
           mkdir -p _site/vignette
           cp J/site/index.html _site/index.html
+          cp J/site/vignettes/jetwork.R _site/vignette/
+          cp -R J/site/assets _site/assets
           touch _site/.nojekyll
       - uses: actions/setup-python@v5
         with:
@@ -147,7 +149,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: out
-          key: seurat-${{ hashFiles('J/site/vignettes/seurat_juxtaposition.Rmd', 'J/r/juxtaposed/**') }}
+          key: seurat-${{ hashFiles('J/site/vignettes/seurat_juxtaposition.Rmd', 'J/site/vignettes/jetwork.R', 'J/r/juxtaposed/**') }}
       - uses: r-lib/actions/setup-pandoc@v2
         if: steps.cache.outputs.cache-hit != 'true'
       - uses: r-lib/actions/setup-r@v2

@@ -1,6 +1,6 @@
 ---
 title: "Juxtaposition analysis of spatial transcriptomics with Seurat"
-subtitle: "A complete workflow with the juxtaposed R package: interfaces with boundary J, co-localization with regional J"
+subtitle: "A complete workflow with the juxtaposed R package: interfaces with boundary J, co-localization with regional J, and tissue-edge ranking with Jetwork"
 author: "Junho Song, Jihyun Kim, Jaesung Yoo, Dongjoo Lee, Kwangsoo Kim"
 date: "`r format(Sys.Date(), '%d %B %Y')`"
 output:
@@ -43,7 +43,8 @@ Boundary J is not a co-expression statistic. Two genes that are expressed in the
 5. Ask which clusters the interface separates.
 6. Score co-localization with regional J and find co-localized modules.
 7. Check calibration, robustness to the smoothing scale, and agreement across sections.
-8. Export results and report them.
+8. Fit Jetwork on independent sections and evaluate ranked edges against held-out annotations.
+9. Export results and report them.
 
 # Setup
 
@@ -341,6 +342,134 @@ both |> filter(q_combined < 0.05, J_1 > 0, J_2 > 0) |> arrange(desc(z_combined))
 ```
 
 Stouffer's combination assumes independent sections. For serial sections of one animal, treat the combined value as descriptive.
+
+# Jetwork: rank tissue boundaries {#jetwork}
+
+Jetwork learns which genes rise and fall together within a region and which genes change in opposite directions across tissue edges. Apply the fitted network to a new section to **rank candidate interface edges** or nominate partners for a set of marker genes. If the new section has annotations, compare the predicted edges with the edges that connect different labels.
+
+In the exploratory seqFISH benchmark, adding Jetwork to an expression-gradient model raised mean average precision from 0.446 to 0.704 and top-10% Jaccard from 0.122 to 0.274 across three held-out embryos. The same addition changed average precision little in DLPFC and MERFISH. The seqFISH reference measures recovery of published cell-type annotations, which were informed by expression and anatomy. [SeqFISH annotation methods](https://www.nature.com/articles/s41587-021-01006-2)
+
+## Fit the gene network on training sections
+
+Save [jetwork.R](jetwork.R) beside the vignette so that R can load the helpers. Each training section supplies an expression matrix with sites in rows and genes in columns, a spatial graph in the same site order, and a biological group ID. Group serial sections by donor or animal. Choose the gene panel on training data and fit the network before using the held-out section.
+
+This example uses three **simulated** sections with known labels. It uses the same functions that will accept your own Seurat data.
+
+```{r jetwork-fit}
+helper <- "jetwork.R"
+if (!file.exists(helper)) helper <- "J/site/vignettes/jetwork.R"
+source(helper)
+
+make_section <- function(group, seed) {
+  set.seed(seed)
+  spots <- expand.grid(col = 0:23, row = 0:17)
+  ids <- paste(group, seq_len(nrow(spots)), sep = "_")
+  xy <- cbind(x = spots$col + (spots$row %% 2) / 2, y = spots$row * sqrt(3) / 2)
+  rownames(xy) <- ids
+  region <- ifelse(spots$col < 12, "Left", "Right")
+  shift <- plogis((spots$col - 11.5) * 1.4)
+  nuisance <- pmax(0, sin(spots$row / 1.5))
+  x <- cbind(Left1 = 2 - 1.6 * shift, Left2 = 1.8 - 1.3 * shift,
+             Right1 = 0.5 + 1.5 * shift, Right2 = 0.6 + 1.3 * shift,
+             Gradient1 = 1 + 2 * nuisance, Gradient2 = 1.2 + 2.1 * nuisance)
+  x <- x + matrix(rnorm(length(x), sd = 0.22), nrow = nrow(x))
+  rownames(x) <- ids
+  g <- juxtaposed::visium_graph(spots$row, 2 * spots$col + spots$row %% 2)
+  dimnames(g) <- list(ids, ids)
+  list(expression = x, graph = g, group = group, annotation = setNames(region, ids), xy = xy)
+}
+training <- list(make_section("train_A", 101), make_section("train_B", 102))
+held_out <- make_section("test_C", 103)
+
+network <- fit_jetwork(training)
+head(rank_jetwork_genes(network, c("Left1", "Left2")))
+```
+
+## Score and validate a held-out section
+
+Generate predictions without the test labels. If training annotations are available, fit two binomial models on the same training edges. One uses the expression gradient and the other adds Jetwork. Compare both at the same prediction budget.
+
+```{r jetwork-evaluate}
+edges <- score_jetwork_edges(network, held_out$expression, held_out$graph)
+
+training_edges <- do.call(rbind, lapply(training, function(s) {
+  e <- score_jetwork_edges(network, s$expression, s$graph)
+  e$transition <- jetwork_edge_truth(e, s$annotation)
+  e
+}))
+gradient_model <- glm(transition ~ gradient, data = training_edges, family = binomial())
+jetwork_model <- glm(transition ~ gradient + jetwork, data = training_edges, family = binomial())
+edges$gradient_fit <- predict(gradient_model, newdata = edges, type = "response")
+edges$gradient_jetwork <- predict(jetwork_model, newdata = edges, type = "response")
+
+rbind(
+  evaluate_jetwork_edges(edges, held_out$annotation, score = "gradient_fit", top = 0.10),
+  evaluate_jetwork_edges(edges, held_out$annotation, score = "gradient_jetwork", top = 0.10)
+)
+```
+
+Average precision measures how well the scores move annotated transitions toward the top. Jaccard is the overlap between the selected edges and all eligible annotated transitions, divided by the size of their union. Compare average precision with the transition prevalence. Annotations are joined by site ID, and edges with a missing label are omitted from evaluation.
+
+```{r jetwork-map, fig.width = 8, fig.height = 3.75}
+edge_map <- function(selected, title, colour) {
+  a <- held_out$xy
+  plot(a, asp = 1, pch = 16, cex = .45, col = "#d8dde4", xlab = "", ylab = "",
+       axes = FALSE, main = title)
+  segments(a[edges$i[selected], 1], a[edges$i[selected], 2],
+           a[edges$j[selected], 1], a[edges$j[selected], 2], col = colour, lwd = 1.5)
+}
+known <- jetwork_edge_truth(edges, held_out$annotation)
+top <- head(order(-edges$gradient_jetwork, edges$i, edges$j), ceiling(.10 * nrow(edges)))
+old_par <- par(mfrow = c(1, 2), mar = c(1, 1, 3, 1))
+edge_map(which(known), "Annotated transitions", "#0072B2")
+edge_map(top, "Top 10% of predicted edges", ifelse(known[top], "#0072B2", "#D55E00"))
+par(old_par)
+```
+
+Blue predicted edges match annotated transitions. Orange edges are other predictions. On an unannotated section, use the rankings to prioritise regions for inspection. The network score and fitted edge probabilities are predictions. Boundary J's pair-level spectral test applies to individual gene pairs.
+
+## Use your own Seurat objects
+
+Use one Seurat object per section and keep every section from the test donor or animal out of training. This example assumes normalized values in the `SCT` assay's `data` layer and a metadata column named `domain`. Use your assay and annotation names as needed.
+
+```{r jetwork-seurat-adapter, eval = FALSE}
+# Replace these with your training and held-out Seurat objects.
+train_objects <- list(donor_A = section_A, donor_B = section_B)
+test_object <- section_C
+
+# Use training variable features measured in all training sections.
+training_features <- lapply(train_objects, function(obj) rownames(obj[["SCT"]]))
+shared <- Reduce(intersect, training_features)
+panel <- head(intersect(VariableFeatures(train_objects[[1]], assay = "SCT"), shared), 512)
+
+as_jetwork_section <- function(object, group, genes, label = "domain") {
+  coords <- tissue_xy(object)
+  stopifnot(identical(rownames(coords), colnames(object)))
+  expr <- GetAssayData(object, assay = "SCT", layer = "data")
+  missing_genes <- setdiff(genes, rownames(expr))
+  if (length(missing_genes)) stop("Missing panel genes: ", paste(missing_genes, collapse = ", "))
+  x <- t(as.matrix(expr[genes, rownames(coords), drop = FALSE]))
+  g <- spatial_graph(coords, neighbors = 6)
+  dimnames(g) <- list(rownames(coords), rownames(coords))
+  tags <- if (label %in% colnames(object[[]])) {
+    setNames(as.character(object[[]][rownames(coords), label]), rownames(coords))
+  } else {
+    NULL
+  }
+  list(expression = x, graph = g, group = group, annotation = tags, xy = coords)
+}
+
+training <- Map(as_jetwork_section, train_objects, names(train_objects),
+                MoreArgs = list(genes = panel))
+held_out <- as_jetwork_section(test_object, "donor_C", panel)
+network <- fit_jetwork(training)
+edges <- score_jetwork_edges(network, held_out$expression, held_out$graph)
+if (!is.null(held_out$annotation)) evaluate_jetwork_edges(edges, held_out$annotation)
+write.csv(edges, "held_out_jetwork_edges.csv", row.names = FALSE)
+saveRDS(network, "jetwork_gene_network.rds")
+```
+
+For Visium with available array rows and columns, use `visium_graph(array_row, array_col)` for the native hexagonal topology. For multiple sections per donor, pass the same biological group ID. To review proposed marker partners, call `rank_jetwork_genes()` with anchor genes from the fitted panel.
 
 # Export
 
