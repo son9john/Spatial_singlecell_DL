@@ -149,7 +149,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: out
-          key: seurat-${{ hashFiles('J/site/vignettes/seurat_juxtaposition.Rmd', 'J/site/vignettes/jetwork.R', 'J/r/juxtaposed/**') }}
+          key: seurat-${{ hashFiles('J/site/vignettes/seurat_juxtaposition.Rmd', 'J/site/vignettes/jetwork.R', 'J/site/assets/fig-s6-jetwork.png', 'J/r/juxtaposed/**') }}
       - uses: r-lib/actions/setup-pandoc@v2
         if: steps.cache.outputs.cache-hit != 'true'
       - uses: r-lib/actions/setup-r@v2

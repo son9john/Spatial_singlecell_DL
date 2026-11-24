@@ -428,6 +428,28 @@ par(old_par)
 
 Blue predicted edges match annotated transitions. Orange edges are other predictions. On an unannotated section, use the rankings to prioritise regions for inspection. The network score and fitted edge probabilities are predictions. Boundary J's pair-level spectral test applies to individual gene pairs.
 
+## Real data: seqFISH embryo 1 {#seqfish-embryo-1}
+
+In the bottom row of **Figure S6 from the manuscript**, the left panel shows edges between different annotated cell types in embryo 1. The middle and right panels show the top 10% ranked by the expression gradient and Jetwork, respectively. At the same budget of 3,454 edges, the gradient matched **1,404** annotated transitions and Jetwork matched **3,322**. The gene network was fitted on embryos 2 and 3. Embryo 1's labels were used only to evaluate its ranked edges.
+
+```{r jetwork-seqfish-figure, echo = FALSE, out.width = "100%", fig.alt = "Figure S6. The seqFISH embryo 1 panels show annotated transitions, 1,404 matches for the expression gradient, and 3,322 matches for Jetwork at a shared budget of 3,454 edges.", fig.cap = "Manuscript Figure S6. The top row shows DLPFC section 151507 and the bottom row shows seqFISH embryo 1. Blue indicates an annotated transition in the reference panel or a match in a prediction panel. Orange marks other selected edges."}
+knitr::include_graphics("../assets/fig-s6-jetwork.png")
+```
+
+The figure compares the two scores individually. In the cohort benchmark above, Jetwork was added to the gradient model. The annotations were informed by expression and anatomy, so a match means agreement with the published cell-type labels. [SeqFISH study and data](https://www.nature.com/articles/s41587-021-01006-2)
+
+To reproduce the comparison from prepared data, pass one measured slice per embryo with the shared 351-gene expression panel, a symmetric six-nearest-neighbour graph and named site annotations. Use the same input format as the simulated example.
+
+```{r jetwork-seqfish-reproduce, eval = FALSE}
+seqfish_network <- fit_jetwork(list(embryo2, embryo3))
+seqfish_edges <- score_jetwork_edges(seqfish_network, embryo1$expression, embryo1$graph)
+
+rbind(
+  evaluate_jetwork_edges(seqfish_edges, embryo1$annotation, score = "gradient", top = 0.10),
+  evaluate_jetwork_edges(seqfish_edges, embryo1$annotation, score = "jetwork", top = 0.10)
+)
+```
+
 ## Use your own Seurat objects
 
 Use one Seurat object per section and keep every section from the test donor or animal out of training. This example assumes normalized values in the `SCT` assay's `data` layer and a metadata column named `domain`. Use your assay and annotation names as needed.
