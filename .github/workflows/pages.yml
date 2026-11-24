@@ -1,0 +1,221 @@
+# Builds the juxtaposed site and publishes it with GitHub Pages.
+#   /            landing page          (J/site/index.html)
+#   /r/          Shiny app for R       (Shinylive + webR, runs in the browser)
+#   /python/     Shiny app for Python  (Shinylive + Pyodide, runs in the browser)
+#   /vignette/   Seurat vignette (R Markdown) and Scanpy notebook (Jupyter)
+#
+# Same content as before, built faster:
+#   * the apps and landing page are published first (about 5 minutes);
+#   * the two vignettes build in parallel jobs and are added in a second deployment;
+#   * each vignette is cached and re-rendered only when its source or the package code changes.
+name: Pages
+
+on:
+  push:
+    branches: [juxtaposition-index]
+    paths: ["J/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  apps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Landing page
+        run: |
+          mkdir -p _site/vignette
+          cp J/site/index.html _site/index.html
+          cp J/site/vignettes/jetwork.R _site/vignette/
+          cp -R J/site/assets _site/assets
+          touch _site/.nojekyll
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Restore the example dataset
+        id: example-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: _site/example/visium_mouse_brain
+          key: example-${{ hashFiles('J/site/tools/make_example.py') }}
+      - name: Example dataset (10x Visium mouse brain, CC BY 4.0)
+        id: example
+        if: steps.example-cache.outputs.cache-hit != 'true'
+        continue-on-error: true   # a download problem at 10x must not stop the site from publishing
+        run: |
+          python -m pip install h5py numpy scipy
+          python J/site/tools/make_example.py _site/example/visium_mouse_brain
+      - name: Save the example dataset
+        if: steps.example.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: _site/example/visium_mouse_brain
+          key: example-${{ hashFiles('J/site/tools/make_example.py') }}
+      - name: Drop an incomplete example
+        if: steps.example.outcome == 'failure'
+        run: rm -rf _site/example
+      - name: Export the Python app
+        run: |
+          python -m pip install --upgrade shinylive
+          cp -R J/python/src/juxtaposed J/site/apps/python/juxtaposed
+          shinylive export J/site/apps/python _site/python
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::shinylive
+            any::shiny
+            any::bslib
+            any::DT
+            any::plotly
+            any::Matrix
+            any::jsonlite
+            any::png
+            any::jpeg
+            any::nanoparquet
+            any::RANN
+            any::data.table
+      - name: Export the R app
+        run: |
+          mkdir -p J/site/apps/r/juxtaposed
+          cp J/r/juxtaposed/R/*.R J/site/apps/r/juxtaposed/
+          Rscript -e 'shinylive::export("J/site/apps/r", "_site/r")'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apps-site
+          path: _site
+          include-hidden-files: true
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          name: pages-quick
+          path: _site
+
+  deploy-quick:
+    needs: apps
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: pages-quick
+
+  scanpy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: cache
+        uses: actions/cache@v4
+        with:
+          path: out
+          key: scanpy-${{ hashFiles('J/site/vignettes/scanpy_juxtaposition.ipynb', 'J/python/src/**') }}
+      - uses: actions/setup-python@v5
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          python-version: "3.12"
+      - name: Execute the Scanpy notebook
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          python -m pip install "scanpy>=1.10,<1.12" leidenalg igraph matplotlib nbconvert ipykernel ./J/python
+          mkdir -p out
+          cp J/site/vignettes/scanpy_juxtaposition.ipynb out/
+          jupyter nbconvert --to html --execute J/site/vignettes/scanpy_juxtaposition.ipynb \
+            --ExecutePreprocessor.timeout=3600 --output-dir out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scanpy-vignette
+          path: out
+
+  seurat:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: cache
+        uses: actions/cache@v4
+        with:
+          path: out
+          key: seurat-${{ hashFiles('J/site/vignettes/seurat_juxtaposition.Rmd', 'J/site/vignettes/jetwork.R', 'J/site/assets/fig-s6-jetwork.png', 'J/r/juxtaposed/**') }}
+      - uses: r-lib/actions/setup-pandoc@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+      - uses: r-lib/actions/setup-r@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          packages: |
+            any::rmarkdown
+            any::knitr
+            any::Seurat
+            any::patchwork
+            any::dplyr
+            any::ggplot2
+            any::Matrix
+            any::RANN
+            bioc::glmGamPoi
+            any::hdf5r
+            local::./J/r/juxtaposed
+      - name: Render the Seurat vignette
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          Rscript -e 'rmarkdown::render("J/site/vignettes/seurat_juxtaposition.Rmd", output_dir = "out")'
+          cp J/site/vignettes/seurat_juxtaposition.Rmd out/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seurat-vignette
+          path: out
+
+  # Collects the apps plus whichever vignettes succeeded; a failed vignette never takes the apps down.
+  assemble:
+    needs: [apps, deploy-quick, scanpy, seurat]
+    if: ${{ always() && needs.apps.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: apps-site
+          path: _site
+      - uses: actions/download-artifact@v4
+        if: ${{ needs.scanpy.result == 'success' }}
+        with:
+          name: scanpy-vignette
+          path: _site/vignette
+      - uses: actions/download-artifact@v4
+        if: ${{ needs.seurat.result == 'success' }}
+        with:
+          name: seurat-vignette
+          path: _site/vignette
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          name: pages-full
+          path: _site
+
+  # Deployment must run in its own job, after the job that uploaded the artifact.
+  deploy-full:
+    needs: assemble
+    if: ${{ always() && needs.assemble.result == 'success' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: pages-full

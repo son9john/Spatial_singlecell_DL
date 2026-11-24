@@ -1,0 +1,34 @@
+A2 aligned 151507x151673 n=3458 pairs=2500 25s
+A2 aligned 151508x151674 n=3480 pairs=2500 26s
+A2 aligned 151510x151670 n=3456 pairs=2500 25s
+A2 aligned 151509x151669 n=3636 pairs=2500 26s
+A2 aligned 151671x151675 n=3388 pairs=2500 19s
+A2 aligned 151672x151676 n=3333 pairs=2500 19s
+A2 rotated 151507x151673 n=3385 pairs=2500 23s
+A2 rotated 151508x151674 n=3562 pairs=2500 25s
+A2 rotated 151509x151669 n=3631 pairs=2500 23s
+A2 rotated 151510x151670 n=3480 pairs=2500 21s
+A2 rotated 151672x151676 n=3093 pairs=2500 14s
+A2 rotated 151671x151675 n=3368 pairs=2500 17s
+A1 151669 white 29s
+A1 151507 white 38s
+A1 151669 matern0.5_range1 50s
+A1 151507 matern0.5_range1 64s
+A1 151669 matern0.5_range3 70s
+A1 151507 matern0.5_range3 90s
+A1 151669 matern0.5_range10 92s
+A1 151669 matern2.5_range1 113s
+A1 151507 matern0.5_range10 118s
+A1 151669 matern2.5_range3 137s
+A1 151507 matern2.5_range1 145s
+A1 151669 matern2.5_range10 157s
+A1 151507 matern2.5_range3 169s
+A1 151673 white 35s
+A1 151507 matern2.5_range10 204s
+A1 151673 matern0.5_range1 57s
+A1 151673 matern0.5_range3 77s
+A1 151673 matern0.5_range10 103s
+A1 151673 matern2.5_range1 127s
+A1 151673 matern2.5_range3 150s
+A1 151673 matern2.5_range10 174s
+saved 51000

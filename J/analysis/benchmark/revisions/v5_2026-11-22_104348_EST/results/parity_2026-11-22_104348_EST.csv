@@ -1,0 +1,5 @@
+reference,unit_method_values,maximum_absolute_error
+gold_b1_auroc,144,0.0
+gold_c1_seqfish_contactz,36,0.0
+gold_c2_seqfish_contactrate,39,0.0
+external_parallel,27,1.1102230246251565e-16

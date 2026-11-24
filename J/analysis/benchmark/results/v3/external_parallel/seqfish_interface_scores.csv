@@ -1,0 +1,181 @@
+embryo,type_a,type_b,gene_a,gene_b,method,edges,contacts,prevalence,average_precision
+embryo1,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,En1,Tbx1,liana_pearson,34535,222,0.006428261184305777,0.05003534240689058
+embryo1,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,En1,Tbx1,liana_spearman,34535,222,0.006428261184305777,0.010105637001537104
+embryo1,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,En1,Tbx1,liana_cosine,34535,222,0.006428261184305777,0.008522555526342191
+embryo1,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,En1,Tbx1,liana_morans,34535,222,0.006428261184305777,0.010360361726895393
+embryo1,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,En1,Tbx1,liana_masked_spearman,34535,222,0.006428261184305777,0.015146908426047415
+embryo1,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,En1,Tbx1,spatialdm_morans,34535,222,0.006428261184305777,0.010360361726895393
+embryo1,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,En1,Tbx1,liana_morans_positive,34535,222,0.006428261184305777,0.059794021956083424
+embryo1,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,En1,Tbx1,spatialdm_morans_positive,34535,222,0.006428261184305777,0.059794021956083424
+embryo1,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,En1,Tbx1,j,34535,222,0.006428261184305777,0.026165140734017416
+embryo1,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,En1,Tbx1,j_regularized,34535,222,0.006428261184305777,0.07610622014047293
+embryo1,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,En1,Tbx1,signed_gradient,34535,222,0.006428261184305777,0.09625867512396603
+embryo1,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,En1,Tbx1,unsigned_gradient,34535,222,0.006428261184305777,0.15949102987405125
+embryo1,Forebrain/Midbrain/Hindbrain,Surface ectoderm,En1,Pdgfa,liana_pearson,34535,65,0.001882148544954394,0.002294883455977213
+embryo1,Forebrain/Midbrain/Hindbrain,Surface ectoderm,En1,Pdgfa,liana_spearman,34535,65,0.001882148544954394,0.002018248520881943
+embryo1,Forebrain/Midbrain/Hindbrain,Surface ectoderm,En1,Pdgfa,liana_cosine,34535,65,0.001882148544954394,0.0032737046065578934
+embryo1,Forebrain/Midbrain/Hindbrain,Surface ectoderm,En1,Pdgfa,liana_morans,34535,65,0.001882148544954394,0.0032589514069194135
+embryo1,Forebrain/Midbrain/Hindbrain,Surface ectoderm,En1,Pdgfa,liana_masked_spearman,34535,65,0.001882148544954394,0.002259682948903009
+embryo1,Forebrain/Midbrain/Hindbrain,Surface ectoderm,En1,Pdgfa,spatialdm_morans,34535,65,0.001882148544954394,0.0032589514069194135
+embryo1,Forebrain/Midbrain/Hindbrain,Surface ectoderm,En1,Pdgfa,liana_morans_positive,34535,65,0.001882148544954394,0.001238681289917248
+embryo1,Forebrain/Midbrain/Hindbrain,Surface ectoderm,En1,Pdgfa,spatialdm_morans_positive,34535,65,0.001882148544954394,0.001238681289917248
+embryo1,Forebrain/Midbrain/Hindbrain,Surface ectoderm,En1,Pdgfa,j,34535,65,0.001882148544954394,0.002148371911745987
+embryo1,Forebrain/Midbrain/Hindbrain,Surface ectoderm,En1,Pdgfa,j_regularized,34535,65,0.001882148544954394,0.002348242823372032
+embryo1,Forebrain/Midbrain/Hindbrain,Surface ectoderm,En1,Pdgfa,signed_gradient,34535,65,0.001882148544954394,0.002456562636465753
+embryo1,Forebrain/Midbrain/Hindbrain,Surface ectoderm,En1,Pdgfa,unsigned_gradient,34535,65,0.001882148544954394,0.0028213844484932006
+embryo1,Gut tube,Splanchnic mesoderm,Foxa1,Foxf1,liana_pearson,34535,131,0.0037932532213696252,0.11515955963540178
+embryo1,Gut tube,Splanchnic mesoderm,Foxa1,Foxf1,liana_spearman,34535,131,0.0037932532213696252,0.022671309335017296
+embryo1,Gut tube,Splanchnic mesoderm,Foxa1,Foxf1,liana_cosine,34535,131,0.0037932532213696252,0.004015560584604782
+embryo1,Gut tube,Splanchnic mesoderm,Foxa1,Foxf1,liana_morans,34535,131,0.0037932532213696252,0.0023784380802721328
+embryo1,Gut tube,Splanchnic mesoderm,Foxa1,Foxf1,liana_masked_spearman,34535,131,0.0037932532213696252,0.03597009148162314
+embryo1,Gut tube,Splanchnic mesoderm,Foxa1,Foxf1,spatialdm_morans,34535,131,0.0037932532213696252,0.002378433800585375
+embryo1,Gut tube,Splanchnic mesoderm,Foxa1,Foxf1,liana_morans_positive,34535,131,0.0037932532213696252,0.2069736987645159
+embryo1,Gut tube,Splanchnic mesoderm,Foxa1,Foxf1,spatialdm_morans_positive,34535,131,0.0037932532213696252,0.2069736997835613
+embryo1,Gut tube,Splanchnic mesoderm,Foxa1,Foxf1,j,34535,131,0.0037932532213696252,0.09630098745129562
+embryo1,Gut tube,Splanchnic mesoderm,Foxa1,Foxf1,j_regularized,34535,131,0.0037932532213696252,0.14765511666122513
+embryo1,Gut tube,Splanchnic mesoderm,Foxa1,Foxf1,signed_gradient,34535,131,0.0037932532213696252,0.16754904477367638
+embryo1,Gut tube,Splanchnic mesoderm,Foxa1,Foxf1,unsigned_gradient,34535,131,0.0037932532213696252,0.17267185699099222
+embryo1,Spinal cord,Dermomyotome,Hoxb9,Meox1,liana_pearson,34535,100,0.0028956131460836834,0.014858716568001487
+embryo1,Spinal cord,Dermomyotome,Hoxb9,Meox1,liana_spearman,34535,100,0.0028956131460836834,0.008962135178100704
+embryo1,Spinal cord,Dermomyotome,Hoxb9,Meox1,liana_cosine,34535,100,0.0028956131460836834,0.002259103658492241
+embryo1,Spinal cord,Dermomyotome,Hoxb9,Meox1,liana_morans,34535,100,0.0028956131460836834,0.0015148678787435129
+embryo1,Spinal cord,Dermomyotome,Hoxb9,Meox1,liana_masked_spearman,34535,100,0.0028956131460836834,0.006868161537161143
+embryo1,Spinal cord,Dermomyotome,Hoxb9,Meox1,spatialdm_morans,34535,100,0.0028956131460836834,0.0015148678787435129
+embryo1,Spinal cord,Dermomyotome,Hoxb9,Meox1,liana_morans_positive,34535,100,0.0028956131460836834,0.030226945351492604
+embryo1,Spinal cord,Dermomyotome,Hoxb9,Meox1,spatialdm_morans_positive,34535,100,0.0028956131460836834,0.030226945351492604
+embryo1,Spinal cord,Dermomyotome,Hoxb9,Meox1,j,34535,100,0.0028956131460836834,0.007783293932692555
+embryo1,Spinal cord,Dermomyotome,Hoxb9,Meox1,j_regularized,34535,100,0.0028956131460836834,0.018251325296460258
+embryo1,Spinal cord,Dermomyotome,Hoxb9,Meox1,signed_gradient,34535,100,0.0028956131460836834,0.045345453328686405
+embryo1,Spinal cord,Dermomyotome,Hoxb9,Meox1,unsigned_gradient,34535,100,0.0028956131460836834,0.09747025833562889
+embryo1,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_pearson,34535,74,0.0021427537281019254,0.06690652369143313
+embryo1,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_spearman,34535,74,0.0021427537281019254,0.006457199455879933
+embryo1,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_cosine,34535,74,0.0021427537281019254,0.0020792213730479315
+embryo1,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_morans,34535,74,0.0021427537281019254,0.0015914156579435964
+embryo1,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_masked_spearman,34535,74,0.0021427537281019254,0.014135724441767784
+embryo1,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,spatialdm_morans,34535,74,0.0021427537281019254,0.0015914156579435964
+embryo1,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_morans_positive,34535,74,0.0021427537281019254,0.2669036934534593
+embryo1,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,spatialdm_morans_positive,34535,74,0.0021427537281019254,0.2669036934534593
+embryo1,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,j,34535,74,0.0021427537281019254,0.04398211529714742
+embryo1,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,j_regularized,34535,74,0.0021427537281019254,0.12812759430296572
+embryo1,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,signed_gradient,34535,74,0.0021427537281019254,0.17471762931342003
+embryo1,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,unsigned_gradient,34535,74,0.0021427537281019254,0.18515765970877632
+embryo2,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,liana_pearson,25819,163,0.006313180216119912,0.02073982975272235
+embryo2,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,liana_spearman,25819,163,0.006313180216119912,0.009168983714111567
+embryo2,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,liana_cosine,25819,163,0.006313180216119912,0.008364810208632605
+embryo2,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,liana_morans,25819,163,0.006313180216119912,0.008489745126818996
+embryo2,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,liana_masked_spearman,25819,163,0.006313180216119912,0.008765537334460475
+embryo2,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,spatialdm_morans,25819,163,0.006313180216119912,0.008489752479871463
+embryo2,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,liana_morans_positive,25819,163,0.006313180216119912,0.013412891115454476
+embryo2,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,spatialdm_morans_positive,25819,163,0.006313180216119912,0.013412889318785001
+embryo2,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,j,25819,163,0.006313180216119912,0.01378770025160896
+embryo2,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,j_regularized,25819,163,0.006313180216119912,0.03685005696952084
+embryo2,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,signed_gradient,25819,163,0.006313180216119912,0.06690124075435686
+embryo2,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,unsigned_gradient,25819,163,0.006313180216119912,0.14333836561805668
+embryo2,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,liana_pearson,25819,231,0.008946899570084047,0.03187545920517937
+embryo2,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,liana_spearman,25819,231,0.008946899570084047,0.019614908247534996
+embryo2,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,liana_cosine,25819,231,0.008946899570084047,0.009373539020008308
+embryo2,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,liana_morans,25819,231,0.008946899570084047,0.007947830334547011
+embryo2,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,liana_masked_spearman,25819,231,0.008946899570084047,0.019800894411950612
+embryo2,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,spatialdm_morans,25819,231,0.008946899570084047,0.007947831878609505
+embryo2,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,liana_morans_positive,25819,231,0.008946899570084047,0.039917268850525746
+embryo2,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,spatialdm_morans_positive,25819,231,0.008946899570084047,0.039917260079073286
+embryo2,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,j,25819,231,0.008946899570084047,0.044114652427594006
+embryo2,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,j_regularized,25819,231,0.008946899570084047,0.07914406059853785
+embryo2,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,signed_gradient,25819,231,0.008946899570084047,0.08523625983875928
+embryo2,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,unsigned_gradient,25819,231,0.008946899570084047,0.06688401815389813
+embryo2,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,liana_pearson,25819,247,0.00956659824160502,0.12157420197527824
+embryo2,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,liana_spearman,25819,247,0.00956659824160502,0.07601158641373713
+embryo2,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,liana_cosine,25819,247,0.00956659824160502,0.009269188814009715
+embryo2,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,liana_morans,25819,247,0.00956659824160502,0.005015659655316212
+embryo2,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,liana_masked_spearman,25819,247,0.00956659824160502,0.07310073667292176
+embryo2,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,spatialdm_morans,25819,247,0.00956659824160502,0.005015659655316212
+embryo2,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,liana_morans_positive,25819,247,0.00956659824160502,0.08760176651071234
+embryo2,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,spatialdm_morans_positive,25819,247,0.00956659824160502,0.08760176651071236
+embryo2,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,j,25819,247,0.00956659824160502,0.07450953519097989
+embryo2,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,j_regularized,25819,247,0.00956659824160502,0.16855978528509594
+embryo2,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,signed_gradient,25819,247,0.00956659824160502,0.25067138637983954
+embryo2,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,unsigned_gradient,25819,247,0.00956659824160502,0.25447579706978757
+embryo2,Spinal cord,Dermomyotome,Hoxb9,Cdx1,liana_pearson,25819,21,0.000813354506371277,0.00134657304186716
+embryo2,Spinal cord,Dermomyotome,Hoxb9,Cdx1,liana_spearman,25819,21,0.000813354506371277,0.0010715215002695111
+embryo2,Spinal cord,Dermomyotome,Hoxb9,Cdx1,liana_cosine,25819,21,0.000813354506371277,0.001178456403049515
+embryo2,Spinal cord,Dermomyotome,Hoxb9,Cdx1,liana_morans,25819,21,0.000813354506371277,0.0014913730433151013
+embryo2,Spinal cord,Dermomyotome,Hoxb9,Cdx1,liana_masked_spearman,25819,21,0.000813354506371277,0.0008176735344446442
+embryo2,Spinal cord,Dermomyotome,Hoxb9,Cdx1,spatialdm_morans,25819,21,0.000813354506371277,0.0014913730433151013
+embryo2,Spinal cord,Dermomyotome,Hoxb9,Cdx1,liana_morans_positive,25819,21,0.000813354506371277,0.0007772638891801519
+embryo2,Spinal cord,Dermomyotome,Hoxb9,Cdx1,spatialdm_morans_positive,25819,21,0.000813354506371277,0.0007772638891801519
+embryo2,Spinal cord,Dermomyotome,Hoxb9,Cdx1,j,25819,21,0.000813354506371277,0.0008239151351358185
+embryo2,Spinal cord,Dermomyotome,Hoxb9,Cdx1,j_regularized,25819,21,0.000813354506371277,0.001240316704925241
+embryo2,Spinal cord,Dermomyotome,Hoxb9,Cdx1,signed_gradient,25819,21,0.000813354506371277,0.004240177276433157
+embryo2,Spinal cord,Dermomyotome,Hoxb9,Cdx1,unsigned_gradient,25819,21,0.000813354506371277,0.017453299041552184
+embryo2,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_pearson,25819,110,0.004260428366706689,0.06313908938008665
+embryo2,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_spearman,25819,110,0.004260428366706689,0.015887412813145752
+embryo2,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_cosine,25819,110,0.004260428366706689,0.00797668400692509
+embryo2,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_morans,25819,110,0.004260428366706689,0.009649786601624707
+embryo2,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_masked_spearman,25819,110,0.004260428366706689,0.016777170668826922
+embryo2,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,spatialdm_morans,25819,110,0.004260428366706689,0.009649786601624709
+embryo2,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_morans_positive,25819,110,0.004260428366706689,0.1688885317063794
+embryo2,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,spatialdm_morans_positive,25819,110,0.004260428366706689,0.1688885317063794
+embryo2,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,j,25819,110,0.004260428366706689,0.05940625582793336
+embryo2,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,j_regularized,25819,110,0.004260428366706689,0.14812698011976855
+embryo2,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,signed_gradient,25819,110,0.004260428366706689,0.17814470974067267
+embryo2,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,unsigned_gradient,25819,110,0.004260428366706689,0.17641028638753908
+embryo3,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,liana_pearson,38167,194,0.005082925039955983,0.030690000119754177
+embryo3,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,liana_spearman,38167,194,0.005082925039955983,0.01152665050294671
+embryo3,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,liana_cosine,38167,194,0.005082925039955983,0.007736933309038064
+embryo3,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,liana_morans,38167,194,0.005082925039955983,0.0073279620498319965
+embryo3,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,liana_masked_spearman,38167,194,0.005082925039955983,0.010241370816847926
+embryo3,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,spatialdm_morans,38167,194,0.005082925039955983,0.007329648538751647
+embryo3,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,liana_morans_positive,38167,194,0.005082925039955983,0.006398745825290287
+embryo3,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,spatialdm_morans_positive,38167,194,0.005082925039955983,0.006399276791515903
+embryo3,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,j,38167,194,0.005082925039955983,0.01479276381333668
+embryo3,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,j_regularized,38167,194,0.005082925039955983,0.028775349084354154
+embryo3,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,signed_gradient,38167,194,0.005082925039955983,0.04960561247338546
+embryo3,Forebrain/Midbrain/Hindbrain,Cranial mesoderm,Otx2,Tbx1,unsigned_gradient,38167,194,0.005082925039955983,0.06348663406821647
+embryo3,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,liana_pearson,38167,98,0.002567663164513847,0.006408935017693292
+embryo3,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,liana_spearman,38167,98,0.002567663164513847,0.0032727226729816956
+embryo3,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,liana_cosine,38167,98,0.002567663164513847,0.0035527346865748635
+embryo3,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,liana_morans,38167,98,0.002567663164513847,0.0041746450266127956
+embryo3,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,liana_masked_spearman,38167,98,0.002567663164513847,0.0030264342560291993
+embryo3,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,spatialdm_morans,38167,98,0.002567663164513847,0.004174650394879534
+embryo3,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,liana_morans_positive,38167,98,0.002567663164513847,0.005583024183702382
+embryo3,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,spatialdm_morans_positive,38167,98,0.002567663164513847,0.0055830232783344
+embryo3,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,j,38167,98,0.002567663164513847,0.0076424270576749866
+embryo3,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,j_regularized,38167,98,0.002567663164513847,0.01934577812238645
+embryo3,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,signed_gradient,38167,98,0.002567663164513847,0.008899771685223806
+embryo3,Forebrain/Midbrain/Hindbrain,Surface ectoderm,Otx2,Pdgfa,unsigned_gradient,38167,98,0.002567663164513847,0.01083953965560018
+embryo3,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,liana_pearson,38167,234,0.006130950821390206,0.1593089250417004
+embryo3,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,liana_spearman,38167,234,0.006130950821390206,0.060688156296846416
+embryo3,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,liana_cosine,38167,234,0.006130950821390206,0.007213027423595958
+embryo3,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,liana_morans,38167,234,0.006130950821390206,0.0032490162519392134
+embryo3,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,liana_masked_spearman,38167,234,0.006130950821390206,0.0736942927031639
+embryo3,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,spatialdm_morans,38167,234,0.006130950821390206,0.003249016362853669
+embryo3,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,liana_morans_positive,38167,234,0.006130950821390206,0.03946634714633724
+embryo3,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,spatialdm_morans_positive,38167,234,0.006130950821390206,0.039466336041025986
+embryo3,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,j,38167,234,0.006130950821390206,0.09173993255433972
+embryo3,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,j_regularized,38167,234,0.006130950821390206,0.18996235187941185
+embryo3,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,signed_gradient,38167,234,0.006130950821390206,0.2801317854340538
+embryo3,Gut tube,Splanchnic mesoderm,Krt18,Foxf1,unsigned_gradient,38167,234,0.006130950821390206,0.3027523545210664
+embryo3,Spinal cord,Dermomyotome,Hoxd4,Six1,liana_pearson,38167,35,0.0009170225587549454,0.0011436926382888078
+embryo3,Spinal cord,Dermomyotome,Hoxd4,Six1,liana_spearman,38167,35,0.0009170225587549454,0.0011118960090670692
+embryo3,Spinal cord,Dermomyotome,Hoxd4,Six1,liana_cosine,38167,35,0.0009170225587549454,0.000730332760576752
+embryo3,Spinal cord,Dermomyotome,Hoxd4,Six1,liana_morans,38167,35,0.0009170225587549454,0.00064116207707993
+embryo3,Spinal cord,Dermomyotome,Hoxd4,Six1,liana_masked_spearman,38167,35,0.0009170225587549454,0.001043600524127513
+embryo3,Spinal cord,Dermomyotome,Hoxd4,Six1,spatialdm_morans,38167,35,0.0009170225587549454,0.00064116207707993
+embryo3,Spinal cord,Dermomyotome,Hoxd4,Six1,liana_morans_positive,38167,35,0.0009170225587549454,0.005352418051081578
+embryo3,Spinal cord,Dermomyotome,Hoxd4,Six1,spatialdm_morans_positive,38167,35,0.0009170225587549454,0.005352418051081578
+embryo3,Spinal cord,Dermomyotome,Hoxd4,Six1,j,38167,35,0.0009170225587549454,0.0013022416649958227
+embryo3,Spinal cord,Dermomyotome,Hoxd4,Six1,j_regularized,38167,35,0.0009170225587549454,0.0016500963468502172
+embryo3,Spinal cord,Dermomyotome,Hoxd4,Six1,signed_gradient,38167,35,0.0009170225587549454,0.0024591785926049263
+embryo3,Spinal cord,Dermomyotome,Hoxd4,Six1,unsigned_gradient,38167,35,0.0009170225587549454,0.006509946471796025
+embryo3,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_pearson,38167,97,0.0025414625199779916,0.04516787544169473
+embryo3,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_spearman,38167,97,0.0025414625199779916,0.006062205989765142
+embryo3,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_cosine,38167,97,0.0025414625199779916,0.002208700223356056
+embryo3,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_morans,38167,97,0.0025414625199779916,0.002061386992018895
+embryo3,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_masked_spearman,38167,97,0.0025414625199779916,0.009685016956401334
+embryo3,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,spatialdm_morans,38167,97,0.0025414625199779916,0.0020613881547017054
+embryo3,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,liana_morans_positive,38167,97,0.0025414625199779916,0.14557879073594826
+embryo3,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,spatialdm_morans_positive,38167,97,0.0025414625199779916,0.14557878928378176
+embryo3,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,j,38167,97,0.0025414625199779916,0.04373926471042407
+embryo3,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,j_regularized,38167,97,0.0025414625199779916,0.13889322377808822
+embryo3,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,signed_gradient,38167,97,0.0025414625199779916,0.19232215877688022
+embryo3,Cardiomyocytes,Splanchnic mesoderm,Ttn,Foxf1,unsigned_gradient,38167,97,0.0025414625199779916,0.14094985400341659

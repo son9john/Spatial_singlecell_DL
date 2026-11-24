@@ -1,0 +1,39 @@
+{
+  "platform": "macOS-27.3-arm64-arm-64bit",
+  "arch": "arm64",
+  "python": "3.12.13",
+  "blas": {
+    "name": "accelerate",
+    "found": true,
+    "version": "unknown",
+    "detection method": "system",
+    "include directory": "unknown",
+    "lib directory": "unknown",
+    "openblas configuration": "unknown",
+    "pc file directory": "unknown"
+  },
+  "numpy": "2.5.5",
+  "scipy": "1.18.1",
+  "mlx": "0.32.4",
+  "processor_count": 14,
+  "gpu": {
+    "device_name": "Apple M4 Max",
+    "max_recommended_working_set_size": 30150672384,
+    "memory_size": 38654705664,
+    "architecture": "applegpu_g16s",
+    "max_buffer_length": 22613000192,
+    "resource_limit": 499000
+  },
+  "graph_edges": 10519,
+  "spots": 3611,
+  "repeats": 3,
+  "random_order_seed": 20261122,
+  "package_version": "0.4.0",
+  "threading": {
+    "VECLIB_MAXIMUM_THREADS": null,
+    "OMP_NUM_THREADS": null,
+    "OPENBLAS_NUM_THREADS": null,
+    "MKL_NUM_THREADS": null
+  },
+  "scope": "Warm complete host-to-host scoring; 1 untimed warmup, then shuffled order; dense contiguous float64 input and symmetric sparse graph in memory; nearest-neighbor graph construction, count normalization and storage I/O excluded; CPU calculations float64, MLX matrices float32; no permutation inference."
+}

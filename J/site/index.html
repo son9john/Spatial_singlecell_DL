@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>juxtaposed · the juxtaposition index J</title>
+<meta name="description" content="Boundary J for tissue interfaces and regional J for co-localization in spatial transcriptomics, with a spectral sign-flip test for every gene pair. Jetwork ranks tissue interfaces from a fitted gene network. Apps for R and Python, a Seurat vignette and a Scanpy notebook.">
+<style>
+  :root {
+    --ink: #1d1d1f; --muted: #5a5a5f; --line: #e3e3e6; --bg: #ffffff; --card: #fafafa;
+    --red: #F8766D; --green: #00BA38; --blue: #619CFF; --purple: #C77CFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink: #ececef; --muted: #a4a4ab; --line: #34343a; --bg: #141416; --card: #1c1c20; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 48px 16px 64px; }
+  h1 { font-size: 2.1rem; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .lede { color: var(--muted); font-size: 1.1rem; margin: 0 0 32px; max-width: 760px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+  td.score { white-space: nowrap; }
+  a.card { display: block; text-decoration: none; color: inherit; background: var(--card);
+           border: 1px solid var(--line); border-radius: 10px; padding: 20px; border-top: 4px solid var(--c); }
+  a.card:hover { border-color: var(--c); }
+  .card h2 { font-size: 1.15rem; margin: 0 0 6px; }
+  .card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+  .card .go { display: inline-block; margin-top: 12px; font-weight: 600; color: var(--ink); }
+  h3 { margin: 44px 0 10px; font-size: 1.15rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; }
+  pre { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; overflow-x: auto; }
+  footer { margin-top: 48px; color: var(--muted); font-size: 0.9rem; }
+  .tablewrap { overflow-x: auto; }
+  .jetwork { margin: 28px 0 0; padding: 24px; border: 1px solid var(--line);
+             background: var(--card); border-radius: 10px; border-top: 4px solid var(--blue); }
+  .jetwork h2 { margin: 0 0 6px; font-size: 1.35rem; }
+  .jetwork p { margin: 8px 0; }
+  .jetwork ol { padding-left: 1.4rem; }
+  .jetwork .links { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+  .jetwork figure { margin: 16px 0 0; }
+  .jetwork img { display: block; width: 100%; height: auto; border-radius: 6px; }
+  .jetwork figcaption { margin-top: 6px; font-size: 0.9rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>juxtaposed: the juxtaposition index J</h1>
+  <p class="lede">Find where two expression programs meet in tissue. <strong>Boundary J</strong> scores whether two genes change in
+    opposite directions across the same edges of the tissue graph: an interface. <strong>Regional J</strong> scores whether they
+    share neighbourhoods. Boundary J comes with p-values from a spectral sign-flip test that keeps each gene's spatial
+    autocorrelation, with no permutations. <a href="#jetwork">Use Jetwork to rank tissue boundaries.</a></p>
+
+  <div class="grid">
+    <a class="card" href="r/" style="--c: var(--blue)">
+      <h2>App for R and Seurat users</h2>
+      <p>Point and click: open a Seurat object (.rds), a 10x Visium, Visium HD or Xenium output, or any table, or try a real 10x mouse brain section. Interfaces on the H&amp;E image, co-localization, downloads and a Methods paragraph.</p>
+      <span class="go">Open the R app →</span>
+    </a>
+    <a class="card" href="python/" style="--c: var(--green)">
+      <h2>App for Python and Scanpy users</h2>
+      <p>The same analysis for AnnData (.h5ad), 10x Visium, Visium HD and Xenium outputs, and tables, built on the Python package.</p>
+      <span class="go">Open the Python app →</span>
+    </a>
+    <a class="card" href="vignette/seurat_juxtaposition.html" style="--c: var(--red)">
+      <h2>Seurat vignette (R)</h2>
+      <p>From a processed Seurat object to interfaces, maps, co-localized modules and a runnable Jetwork workflow with held-out annotations.</p>
+      <span class="go">Read the vignette →</span>
+    </a>
+    <a class="card" href="vignette/scanpy_juxtaposition.html" style="--c: var(--purple)">
+      <h2>Scanpy notebook (Python)</h2>
+      <p>The same analysis on AnnData, step for step, on the same Visium section. Works with Squidpy graphs too.</p>
+      <span class="go">Read the notebook →</span>
+    </a>
+  </div>
+
+  <section class="jetwork" id="jetwork" aria-labelledby="jetwork-title">
+    <h2 id="jetwork-title">Jetwork ranks transitions between tissue domains</h2>
+    <p>Fit a gene network that combines co-expression within regions with opposing expression changes across tissue edges.
+      Use it to nominate marker partners and map candidate boundaries in a new specimen.</p>
+    <ol>
+      <li>Fit <code>fit_jetwork(training)</code> on expression and spatial graphs from training specimens.</li>
+      <li>Run <code>score_jetwork_edges(model, expression, graph)</code> on a held-out section to rank its edges.</li>
+      <li>With held-out labels, use <code>evaluate_jetwork_edges(edges, annotations)</code> to measure average precision
+        and top-10% Jaccard at a matched prediction budget.</li>
+    </ol>
+    <p class="links"><a href="vignette/seurat_juxtaposition.html#jetwork">Run the Seurat example</a>
+      <a href="vignette/jetwork.R" download>Download Jetwork R helpers</a></p>
+    <p><strong>Held-out seqFISH embryos.</strong> Adding Jetwork raised mean boundary average precision from 0.446 to 0.704
+      and top-10% Jaccard from 0.122 to 0.274. DLPFC and MERFISH showed little improvement. The seqFISH labels were informed by
+      expression and anatomy. <a href="https://www.nature.com/articles/s41587-021-01006-2">Annotation methods</a></p>
+    <figure>
+      <img src="assets/jetwork_boundary_maps.png" width="2200" height="1540" loading="lazy"
+           alt="Annotated transitions and ranked tissue edges from the expression gradient and Jetwork in held-out DLPFC and seqFISH specimens.">
+      <figcaption>At the same top-10% budget, Jetwork matched 3,322 of 3,454 edges in the first seqFISH embryo.
+        The expression-gradient score matched 1,404.</figcaption>
+    </figure>
+  </section>
+
+  <h3>Which score answers my question?</h3>
+  <div class="tablewrap">
+  <table>
+    <tr><th>Question</th><th>Score</th><th>Reads</th></tr>
+    <tr><td>Do two programs meet at an interface and change in opposite directions across it?</td>
+        <td class="score"><span class="dot" style="background: var(--red)"></span>Boundary J</td>
+        <td>J &gt; 0 opposing; J &lt; 0 concordant; J ≈ 0 no shared boundary</td></tr>
+    <tr><td>Where is that interface?</td>
+        <td class="score"><span class="dot" style="background: var(--red)"></span>Edge map</td>
+        <td>High signed evidence marks the interface edges</td></tr>
+    <tr><td>Are two genes expressed in the same neighbourhoods?</td>
+        <td class="score"><span class="dot" style="background: var(--green)"></span>Regional J</td>
+        <td>&gt; 0 shared region; &lt; 0 complementary regions</td></tr>
+    <tr><td>Can I trust the normal approximation behind a pair's p-value?</td>
+        <td class="score"><span class="dot" style="background: var(--purple)"></span>Effective modes</td>
+        <td>Python: <code>res.extra["modes"]</code>. With fewer than about 20 modes, use <code>method="auto"</code> for Monte Carlo sign-flip p-values</td></tr>
+  </table>
+  </div>
+
+  <h3>Install</h3>
+<pre><code># R
+remotes::install_github("son9john/Spatial_singlecell_DL", subdir = "J/r/juxtaposed", ref = "juxtaposition-index")
+
+# Python
+pip install "git+https://github.com/son9john/Spatial_singlecell_DL@juxtaposition-index#subdirectory=J/python"</code></pre>
+  <p>Current versions: Python <code>juxtaposed</code> 0.5.0 (adds Monte Carlo p-values and effective spectral modes) and
+    R <code>juxtaposed</code> 0.4.0.</p>
+
+  <p>The apps run entirely in your browser with WebAssembly (Shinylive). The first load downloads R or Python and takes 20–60 seconds;
+    data you open stay on your computer. Example data: 10x Genomics, Mouse Brain Serial Section 1 (Sagittal-Anterior), CC BY 4.0.</p>
+
+  <footer>
+    Junho Song, Jihyun Kim, Jaesung Yoo, Dongjoo Lee, Kwangsoo Kim. The juxtaposition index J maps where spatial expression
+    domains meet, with a spectral test for every gene pair. Preprint, 2026. J extends the Lee's L code of this repository (2021).
+    <a href="https://github.com/son9john/Spatial_singlecell_DL/blob/juxtaposition-index/J/manuscript/J_manuscript_bioRxiv_v15.pdf">Manuscript (v15, PDF)</a> ·
+    <a href="https://github.com/son9john/Spatial_singlecell_DL/tree/juxtaposition-index/J">Source code</a> ·
+    <a href="https://github.com/son9john/Spatial_singlecell_DL/tree/juxtaposition-index/J/analysis">Analysis scripts and results</a>.
+  </footer>
+</main>
+</body>
+</html>
